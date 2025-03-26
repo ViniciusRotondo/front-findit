@@ -7,6 +7,7 @@ import Carrossel from "@/components/Carrossel/page"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation";
+import Link from "next/link"
 
 const fetchEventos = async () => {
     try {
@@ -43,10 +44,12 @@ export default function Home() {
             <div className="bg-black w-full h-20 flex items-center justify-center">
                 <div className="relative w-3/4">
                     <input
-                        className="bg-white rounded-3xl h-10 w-full pl-4 pr-10 p-4 focus:outline-none"
+                        className="bg-white rounded-3xl h-10 w-full pl-4 pr-10 p-4 focus:text-black focus:outline-none"
                         placeholder="Buscar"
                     />
-                    <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" />
+                    <Link href={"#"}>
+                        <FaSearch className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer" />
+                    </Link>
                 </div>
             </div>
             <main className="bg-white w-full min-h-screen mx-auto grid place-items-center pt-12">
@@ -103,6 +106,9 @@ export default function Home() {
                                 </button>
                             </div>
                         ))}
+                        <button className="bg-black text-white w-2/6 hover:bg-gray-900 transition-all duration-300 ease-in-out text-md p-2 mb-4 font-lato">
+                            MOSTRAR MAIS EVENTOS
+                        </button>
                     </div>
                 </div>
             </main>
