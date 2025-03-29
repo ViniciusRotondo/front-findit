@@ -13,15 +13,15 @@ export default function Header() {
           <Image src={Logo} alt="FindIt Logo" width={220} height={300} priority />
         </Link>
         <nav>
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-10">
             <li>
-              <Link href="/" className="hover:text-[#EE6405] font-lato font-semibold">EVENTOS</Link>
+              <Link href="/" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">EVENTOS</Link>
             </li>
             <li>
-              <Link href="/localizacao" className="hover:text-[#EE6405] font-lato font-semibold">LOCALIZAÇÃO</Link>
+              <Link href="/localizacao" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">LOCALIZAÇÃO</Link>
             </li>
             <li>
-              <Link href="/sobre-nos" className="hover:text-[#EE6405] font-lato font-semibold">SOBRE NÓS</Link>
+              <Link href="/sobre-nos" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">SOBRE NÓS</Link>
             </li>
           </ul>
         </nav>
@@ -29,7 +29,7 @@ export default function Header() {
       <div>
         <ul className="flex space-x-6 items-center">
           <li>
-            <Link href="/login" className="hover:text-[#EE6405] flex items-center px-24">
+            <Link href="/login" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 flex items-center px-24">
               <FaUser className="mr-2" /> Login
             </Link>
           </li>

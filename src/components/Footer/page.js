@@ -43,9 +43,9 @@ export default function Footer() {
                 <div className="">
                 <h3 className="font-semibold">Redes Sociais</h3>
                     <div className="flex space-x-4 mt-4 md:mt-0 py-2">
-                        <FaFacebook className="text-2xl hover:text-white cursor-pointer transition-transform hover:scale-150" />
-                        <FaInstagram className="text-2xl hover:text-white cursor-pointer transition-transform hover:scale-150" />
-                        <FaYoutube className="text-2xl hover:text-white cursor-pointer transition-transform hover:scale-150" />
+                        <FaFacebook className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
+                        <FaInstagram className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
+                        <FaYoutube className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
                     </div>
                 </div>
             </div>
