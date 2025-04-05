@@ -52,10 +52,14 @@ export default function Home() {
                     </Link>
                 </div>
             </div>
-            <main className="bg-white w-full min-h-screen mx-auto grid place-items-center pt-12">
-                <Carrossel />
+            <main
+                className="bg-cover bg-center w-full min-h-screen mx-auto grid place-items-center pt-12"
+                style={{ backgroundImage: "url('/home.png')" }}
+            >
+                <div className="w-full h-full">
+                    <Carrossel />
 
-                <div className="flex flex-col self-start w-full mx-auto max-w-5xl pt-12">
+                    <div className="flex flex-col self-start w-full mx-auto max-w-5xl pt-12">
                     <h1 className="font-lato text-black font-bold text-xl w-full">CATEGORIAS</h1>
                     <hr className="border-black border-t-2 w-full" />
 
@@ -81,34 +85,33 @@ export default function Home() {
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <div className="flex flex-col self-start w-full mx-auto max-w-5xl pt-8">
-                    <h1 className="font-lato text-black font-bold text-xl w-full">TODOS OS EVENTOS</h1>
-                    <hr className="border-black border-t-2 w-full" />
-                    <div className="flex flex-wrap justify-center gap-12 pt-4 ">
-                        {eventos.map((evento, id) => (
-                            <div className="flex flex-wrap justify-center gap-4 max-w-full pt-4 hover:translate-y-1 transition-transform" key={id}>
-                                <button
-                                    onClick={() => handleViewEvent(evento.idEvento)}>
-                                    <div className="w-64 h-80 shadow-md rounded-t-md mb-4 text-left">
-                                        <Image
-                                            className="w-full h-3/4 rounded-t-md"
-                                            src={`/${evento.url_imagem}.jpg`}
-                                            width={258}
-                                            height={350}
-                                            alt={evento.nome_do_evento}
-                                        />
-                                        <p className="text-black font-lato">{evento.nome_do_evento}</p>
-                                        <p className="text-gray-400 font-extralight font-lato text-sm">Allianz Parque - {evento.data_hora}</p>
-                                        <p className="text-black font-extrabold font-lato">R${evento.preco},00</p>
-                                    </div>
-                                </button>
-                            </div>
-                        ))}
-                        <button className="bg-black text-white w-2/6 hover:bg-gray-900 transition-all duration-300 ease-in-out text-md p-2 mb-4 font-lato">
-                            MOSTRAR MAIS EVENTOS
-                        </button>
+                    </div>
+                    <div className="flex flex-col self-start w-full mx-auto max-w-5xl pt-8">
+                        <h1 className="font-lato text-black font-bold text-xl w-full">TODOS OS EVENTOS</h1>
+                        <hr className="border-black border-t-2 w-full" />
+                        <div className="flex flex-wrap justify-center gap-12 pt-4 ">
+                            {eventos.map((evento, id) => (
+                                <div className="flex flex-wrap justify-center gap-4 max-w-full pt-4 hover:translate-y-1 transition-transform" key={id}>
+                                    <button onClick={() => handleViewEvent(evento.idEvento)}>
+                                        <div className="w-64 h-80 shadow-md rounded-t-md mb-4 text-left">
+                                            <Image
+                                                className="w-full h-3/4 rounded-t-md"
+                                                src={`/${evento.url_imagem}.jpg`}
+                                                width={258}
+                                                height={350}
+                                                alt={evento.nome_do_evento}
+                                            />
+                                            <p className="text-black font-lato">{evento.nome_do_evento}</p>
+                                            <p className="text-gray-400 font-extralight font-lato text-sm">Allianz Parque - {evento.data_hora}</p>
+                                            <p className="text-black font-extrabold font-lato">R${evento.preco},00</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            ))}
+                            <button className="bg-black text-white w-2/6 hover:bg-gray-900 transition-all duration-300 ease-in-out text-md p-2 mb-4 font-lato">
+                                MOSTRAR MAIS EVENTOS
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>

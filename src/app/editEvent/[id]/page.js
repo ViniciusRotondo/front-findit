@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation"; // Para capturar o ID dinâmico da rota
+import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
+import Header from "@/components/Header/page";
+import Footer from "@/components/Footer/page";
 
 export default function EditEvent() {
   const [formData, setFormData] = useState({
@@ -18,15 +20,14 @@ export default function EditEvent() {
   });
 
   const router = useRouter();
-  const { id } = useParams(); // Captura o ID da rota dinâmica
+  const { id } = useParams();
 
-  // Buscar dados ao carregar a página
   useEffect(() => {
-    if (!id) return; // Não faz nada se não tiver ID
+    if (!id) return;
     const fetchData = async () => {
       try {
         const resEvento = await axios.get(`http://localhost:8080/event/${id}`);
-        setFormData(resEvento.data); // Preencher os dados do evento no formulário
+        setFormData(resEvento.data);
       } catch (error) {
         console.error("Erro ao buscar dados do evento:", error);
       }
@@ -37,140 +38,79 @@ export default function EditEvent() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      // Enviar dados para o backend
       await axios.put(`http://localhost:8080/event/${id}`, formData);
-
       alert("Evento atualizado com sucesso!");
-      router.push("/"); // Redirecionar para a página de listagem de eventos
+      router.push("/");
     } catch (error) {
       console.error("Erro ao atualizar evento:", error);
       alert("Erro ao atualizar evento.");
     }
   };
 
-  if (!formData.nome_do_evento) {
-    return <p>Carregando...</p>;
-  }
+  if (!formData.nome_do_evento) return <p className="text-center mt-10">Carregando...</p>;
 
   return (
-    <div className="min-h-screen bg-white p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Editar Evento</h1>
-      <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6 bg-gray-100 p-6 rounded-lg shadow-md">
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Nome do Evento</label>
-          <input
-            type="text"
-            name="nome_do_evento"
-            value={formData.nome_do_evento}
-            onChange={handleChange}
-            placeholder="Digite o nome do evento"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Descrição</label>
-          <textarea
-            name="descricao"
-            value={formData.descricao}
-            onChange={handleChange}
-            placeholder="Digite a descrição do evento"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-            required
-          ></textarea>
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Data e Hora</label>
-          <input
-            type="datetime-local"
-            name="data_hora"
-            value={formData.data_hora}
-            onChange={handleChange}
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">URL da Imagem</label>
-          <input
-            type="text"
-            name="url_imagem"
-            value={formData.url_imagem}
-            onChange={handleChange}
-            placeholder="Insira a URL da imagem do evento"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Preço</label>
-          <input
-            type="number"
-            name="preco"
-            value={formData.preco}
-            onChange={handleChange}
-            placeholder="Digite o preço do evento"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Duração (minutos)</label>
-          <input
-            type="number"
-            name="duracao"
-            value={formData.duracao}
-            onChange={handleChange}
-            placeholder="Digite a duração do evento"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Indicativo de Idade</label>
-          <input
-            type="number"
-            name="indicativo_idade"
-            value={formData.indicativo_idade}
-            onChange={handleChange}
-            placeholder="Digite o indicativo de idade"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-          />
-        </div>
-
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Telefone</label>
-          <input
-            type="text"
-            name="telefone"
-            value={formData.telefone}
-            onChange={handleChange}
-            placeholder="Digite o telefone de contato"
-            className="block w-full p-3 border border-gray-300 rounded text-gray-900 focus:ring focus:ring-blue-200"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 transition"
+    <>
+      <div
+        className="bg-cover bg-center min-h-screen"
+        style={{ backgroundImage: "url('/page3.png')" }}
+      >
+        <Header />
+        <div className="min-h-screen px-4 py-10 text-white">
+        <form
+          onSubmit={handleSubmit}
+          className="max-w-2xl mx-auto bg-white bg-opacity-95 text-gray-900 p-10 rounded-2xl shadow-2xl space-y-6"
         >
-          Atualizar Evento
-        </button>
-      </form>
-    </div>
+          <h1 className="text-3xl font-bold text-center text-black mb-2">Editar Evento</h1>
+          {[
+            { label: "Nome do Evento", name: "nome_do_evento", type: "text" },
+            { label: "Descrição", name: "descricao", type: "textarea" },
+            { label: "Data e Hora", name: "data_hora", type: "datetime-local" },
+            { label: "URL da Imagem", name: "url_imagem", type: "text" },
+            { label: "Preço", name: "preco", type: "number" },
+            { label: "Duração (minutos)", name: "duracao", type: "number" },
+            { label: "Indicativo de Idade", name: "indicativo_idade", type: "number" },
+            { label: "Telefone", name: "telefone", type: "text" },
+          ].map(({ label, name, type }) => (
+            <div key={name}>
+              <label className="block text-gray-800 font-bold text-base mb-2">{label}</label>
+              {type === "textarea" ? (
+                <textarea
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900"
+                  required
+                ></textarea>
+              ) : (
+                <input
+                  type={type}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900"
+                  required
+                />
+              )}
+            </div>
+          ))}
+
+          <button
+            type="submit"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition shadow-md"
+          >
+            Atualizar Evento
+          </button>
+        </form>
+      </div>
+        <Footer />
+      </div>
+    </>
   );
 }
