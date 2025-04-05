@@ -21,9 +21,6 @@ export default function Footer() {
                             <Link className="hover:underline cursor-pointer" href="/">Home</Link>
                         </li>
                         <li>
-                            <Link className="hover:underline cursor-pointer" href="/contato">Contato</Link>
-                        </li>
-                        <li>
                             <Link className="hover:underline cursor-pointer" href="/sobre-nos">Sobre nós</Link>
                         </li>
                     </ul>
@@ -43,9 +40,27 @@ export default function Footer() {
                 <div className="">
                 <h3 className="font-semibold">Redes Sociais</h3>
                     <div className="flex space-x-4 mt-4 md:mt-0 py-2">
+                    <a
+                        href="https://www.facebook.com/?locale=pt_BR"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <FaFacebook className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
+                    </a>
+                    <a
+                        href="https://www.instagram.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <FaInstagram className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
+                    </a>
+                    <a
+                        href="www.youtube.com/?gl=BR&hl=pt"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <FaYoutube className="text-2xl hover:text-white cursor-pointer transition-transform ease-in-out duration-500 hover:scale-150" />
+                    </a>
                     </div>
                 </div>
             </div>
