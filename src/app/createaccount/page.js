@@ -3,8 +3,99 @@
 import Header from "@/components/Header/page";
 import Footer from "@/components/Footer/page";
 import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function CadastroOrg() {
+    const [formData, setFormData] = useState({
+        nome: "",
+        email: "",
+        senha: "",
+        confirmarSenha: "",
+        telefone: "",
+        data_nascimento:""
+        
+      });
+      const router = useRouter();
+
+      const alertaBonitao = (mensagem, tipo) => {
+        toast[mensagem.includes('sucesso') ? 'success' : 'error'](mensagem, {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
+      };
+
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+          setFormData({
+            ...formData,
+            [name]: value ,
+          });
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log("Form data:", formData);  // Para depurar se os dados estão sendo capturados corretamente
+    
+        // Validação dos campos
+        if (!formData.nome || !formData.email || !formData.senha || !formData.telefone || !formData.data_nascimento || !formData.confirmarSenha) {
+            alertaBonitao('Por favor, preencha todos os campos!', 'error');
+            return;
+        }
+    
+        // Validação de e-mail
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!emailRegex.test(formData.email)) {
+            alertaBonitao('Por favor, insira um e-mail válido!', 'error');
+            return;
+        }
+    
+        // Validação de telefone
+        const telefoneRegex = /^\(\d{2}\) \d{9}$/; // (XX) XXXXX-XXXX
+        if (!telefoneRegex.test(formData.telefone)) {
+            alertaBonitao('Por favor, insira um telefone válido!', 'error');
+            return;
+        }
+    
+        // Validação de senha
+        if (formData.senha.length < 6) {
+            alertaBonitao('A senha deve ter pelo menos 6 caracteres!', 'error');
+            return;
+        }
+    
+        // Validação de senha de confirmação
+        if (formData.senha !== formData.confirmarSenha) {
+            alertaBonitao('As senhas não coincidem!', 'error');
+            return;
+        }
+    
+        // Se todas as validações passarem, envia os dados
+        try {
+            // Enviando dados para o servidor
+            const response = await axios.post("http://localhost:8080/user", formData);
+            console.log("Resposta do servidor:", response);  // Para verificar a resposta do servidor
+    
+            // Exibindo alerta de sucesso
+            alertaBonitao("Usuário criado com sucesso!");
+    
+            // Redirecionando para a página de login
+            setTimeout(() => {
+                router.push("/login");
+            }, 2000); // Espera 2 segundos antes de redirecionar
+        } catch (error) {
+            console.error("Erro ao criar usuário:", error);
+            alertaBonitao("Erro ao criar usuário.", 'error');
+        }
+    };
+
     return (
         <>
             <div className="min-h-screen bg-white flex flex-col">
@@ -16,30 +107,72 @@ export default function CadastroOrg() {
                             CADASTRE-SE
                         </h2>
                         <hr className="border-t-2 border-gray-300 mb-8" />
-                        <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Nome</label>
-                                <input type="text" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" placeholder="Nome Completo" />
+                                <input 
+                                name="nome"
+                                type="text" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="Nome Completo"
+                                value={formData.nome}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Telefone</label>
-                                <input type="text" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" placeholder="(00) 000000000" />
+                                <input 
+                                name="telefone"
+                                type="text" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="(00) 000000000" 
+                                value={formData.telefone}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Data de Nascimento</label>
-                                <input type="text" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" placeholder="DD/MM/AAAA" />
+                                <input 
+                                name="data_nascimento"
+                                type="text" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="DD/MM/AAAA" 
+                                value={formData.data_nascimento}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">E-mail</label>
-                                <input type="email" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" />
+                                <input 
+                                name="email"
+                                type="email" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="Insira um e-mail"
+                                value={formData.email}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Senha</label>
-                                <input type="text" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" />
+                                <input
+                                name="senha" 
+                                type="password" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="Insira uma senha"
+                                value={formData.senha}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Confirme a Senha</label>
-                                <input type="password" className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" />
+                                <input
+                                name="confirmarSenha"
+                                type="password" 
+                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
+                                placeholder="Confirme sua senha"
+                                value={formData.confirmarSenha}
+                                onChange={handleChange}
+                                />
                             </div>
                             <div className="md:col-span-2 flex flex-col items-center gap-4 mt-6">
                                 <p className="text-sm text-gray-700">
@@ -59,6 +192,7 @@ export default function CadastroOrg() {
                     </div>
                 </main>
                 <Footer />
+                <ToastContainer />
             </div>
         </>
     );
