@@ -16,13 +16,13 @@ export default function Header() {
   return (
     <header className="bg-white text-black py-4 px-6 flex items-center justify-between shadow-md">
       <div className="flex items-center space-x-8">
-        <Link href="/home">
+        <Link href="/">
           <Image src={Logo} alt="FindIt Logo" width={220} height={300} priority />
         </Link>
         <nav>
           <ul className="flex space-x-10">
             <li>
-              <Link href="/" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
+              <Link href="/eventos" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
                 EVENTOS
               </Link>
             </li>
