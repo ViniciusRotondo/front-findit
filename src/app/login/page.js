@@ -41,7 +41,7 @@ export default function LoginPage() {
       alertaBonitao("Erro ao fazer login, verifique seus dados.");
     } else {
       alertaBonitao("Login realizado com sucesso!");
-      window.location.href = "/home";
+      window.location.href = "/";
     }
   };
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
 
               <div className="flex justify-end">
                 <Link
-                  href="#"
+                  href="/recuperar-senha"
                   className="text-sm text-gray-700 hover:text-[#EE6405] underline transition"
                 >
                   Esqueci minha senha
