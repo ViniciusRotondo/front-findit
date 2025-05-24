@@ -5,9 +5,15 @@ import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/Header/page';
 import Footer from '@/components/Footer/page';
 import axios from 'axios';
+import Image from 'next/image';
+import { FaHeart, FaRegHeart, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaTicketAlt, FaInfoCircle, FaPhoneAlt, FaCheckCircle } from 'react-icons/fa';
+import { MdOutlineAccessTimeFilled } from "react-icons/md";
+import { GrStatusGood } from "react-icons/gr";
+
 
 const ViewEvent = () => {
   const [evento, setEvento] = useState(null);
+  const [isLiked, setIsLiked] = useState(false);
   const router = useRouter();
   const { id } = useParams();
 
@@ -25,6 +31,10 @@ const ViewEvent = () => {
     fetchEvento();
   }, [id]);
 
+  const handleLikeClick = () => {
+    setIsLiked(!isLiked);
+  };
+
   if (!evento) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-white font-lato">
@@ -34,63 +44,109 @@ const ViewEvent = () => {
   }
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center font-lato text-black"
-      style={{ backgroundImage: "url('/page1.png')" }}
-    >
-      <div className="bg-white/80 min-h-screen flex flex-col">
-        <Header />
+    <div className="flex flex-col min-h-screen font-lato text-black">
+      <Header />
 
-        <main className="flex-grow flex flex-col items-center px-4 py-10">
-          <h1 className="text-4xl font-bold text-[#EE6405] mb-8 text-center">
-            {evento.nome_do_evento}
-          </h1>
+      <main
+        className="flex-grow flex flex-col items-center px-4 py-10 bg-cover bg-center"
+        style={{ backgroundImage: "url('/page1.png')" }} // AQUI ESTÁ A MUDANÇA
+      >
+        {/* Adicione uma sobreposição para melhorar a legibilidade do conteúdo sobre o background */}
+        <div className="w-full max-w-4xl bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-xl flex flex-col items-center">
+            {/* Banner do Evento com a imagem */}
+            <div className="relative w-full h-80 rounded-lg overflow-hidden shadow-xl mb-8">
+            <Image
+                src={`/${evento.url_imagem}.jpg`}
+                alt={evento.nome_do_evento}
+                layout="fill"
+                objectFit="cover"
+                priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                <h1 className="text-4xl font-extrabold text-white drop-shadow-lg">
+                {evento.nome_do_evento}
+                </h1>
+            </div>
+            </div>
 
-          <div className="w-full max-w-2xl space-y-6 bg-white rounded-3xl shadow-lg p-8 text-black">
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Descrição</h2>
-              <p>{evento.descricao}</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Data e Hora</h2>
-              <p>{new Date(evento.data_hora).toLocaleString()}</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Local</h2>
-              <p>{evento.local ? evento.local.nome : "Sem Local"}</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Preço</h2>
-              <p>R$ {evento.preco.toFixed(2)}</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Duração</h2>
-              <p>{evento.duracao} horas</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Indicativo de Idade</h2>
-              <p>{evento.indicativo_idade} anos</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Telefone</h2>
-              <p>{evento.telefone}</p>
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#EE6405]">Status</h2>
-              <p>{evento.status}</p>
-            </div>
-          </div>
+            <div className="w-full flex flex-col lg:flex-row gap-8">
+            {/* Coluna de Informações do Evento */}
+            <div className="flex-1 bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+                <h2 className="text-2xl font-bold text-black mb-6">Detalhes do Evento</h2>
+                
+                <div className="space-y-4">
+                <div className="flex items-center text-lg">
+                    <FaCalendarAlt className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Data e Hora:</strong> {new Date(evento.data_hora).toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <FaMapMarkerAlt className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Local:</strong> {evento.local ? evento.local.nome : "Informação indisponível"}</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <FaTicketAlt className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Preço:</strong> R$ {evento.preco ? evento.preco.toFixed(2).replace('.', ',') : '0,00'}</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <MdOutlineAccessTimeFilled className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Duração:</strong> {evento.duracao} horas</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <FaInfoCircle className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Idade:</strong> {evento.indicativo_idade || 'Livre'} anos</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <FaPhoneAlt className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Contato:</strong> {evento.telefone || 'Não informado'}</p>
+                </div>
+                <div className="flex items-center text-lg">
+                    <GrStatusGood className="text-[#EE6405] mr-3 text-xl" />
+                    <p><strong className="font-semibold">Status:</strong> {evento.status || 'Ativo'}</p>
+                </div>
+                </div>
 
-          <button
+                <h3 className="text-xl font-bold text-black mt-8 mb-4">Descrição do Evento</h3>
+                <p className="text-gray-700 leading-relaxed">
+                {evento.descricao || 'Nenhuma descrição detalhada disponível para este evento.'}
+                </p>
+
+                {/* Botão de Curtir */}
+                <button
+                onClick={handleLikeClick}
+                className={`flex items-center justify-center mt-8 px-6 py-3 rounded-full text-lg font-bold transition-all duration-300 ease-in-out
+                    ${isLiked ? 'bg-red-500 text-white shadow-md' : 'bg-[#FFA567] text-black border border-[#EE6405] hover:bg-[#EE6405] hover:text-white'}
+                `}
+                >
+                {isLiked ? (
+                    <>
+                    <FaHeart className="mr-2 text-white" /> Curtido!
+                    </>
+                ) : (
+                    <>
+                    <FaRegHeart className="mr-2" /> Curtir Evento
+                    </>
+                )}
+                </button>
+            </div>
+
+            {/* Coluna Lateral - Poderia ser para mapa, ingressos, etc. Por enquanto, vazia para manter a estrutura */}
+            <div className="flex-1 bg-white rounded-xl shadow-lg p-8 border border-gray-200 flex flex-col items-center justify-center">
+                <h2 className="text-2xl font-bold text-black mb-6 text-center">Mais Informações</h2>
+                <p className="text-gray-500 text-center">Conteúdo adicional como mapa do local ou opções de ingresso podem ser adicionados aqui futuramente.</p>
+            </div>
+            </div>
+
+            {/* Botão de Voltar */}
+            <button
             onClick={() => router.push('/')}
-            className="mt-8 bg-[#EE6405] hover:bg-[#d65400] text-white font-semibold py-3 px-6 rounded-2xl transition-all"
-          >
-            Voltar para a lista
-          </button>
-        </main>
+            className="mt-12 bg-black hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 ease-in-out text-lg shadow-md"
+            >
+            Voltar para a Home
+            </button>
+        </div>
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 };

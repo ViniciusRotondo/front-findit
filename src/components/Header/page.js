@@ -27,8 +27,8 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link href="/localizacao" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
-                LOCALIZAÇÃO
+              <Link href="/meus-eventos" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
+                MEUS EVENTOS
               </Link>
             </li>
             <li>
@@ -59,7 +59,7 @@ export default function Header() {
                   <Link href="/meus-dados" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
                     Meus dados
                   </Link>
-                  <Link href="/eventos-curtidos" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
+                  <Link href="/meus-eventos" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
                     Meus eventos
                   </Link>
                   <button
