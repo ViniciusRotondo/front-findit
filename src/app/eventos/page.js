@@ -146,7 +146,7 @@ export default function Eventos() {
         {/* Tabela */}
         <div className="flex flex-wrap justify-center gap-12 pt-8">
   {eventosFiltrados.length === 0 ? (
-    <p className="text-white text-xl">Nenhum evento encontrado.</p>
+    <p className="text-4xl font-bold text-[#EE6405] mb-6">Nenhum evento encontrado.</p>
   ) : (
     eventosFiltrados.map((evento) => (
       <div
