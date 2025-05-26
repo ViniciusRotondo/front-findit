@@ -1,11 +1,12 @@
-// eventos/page.tsx
+// eventos/page.js
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { FaSearch, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import Header from '@/components/Header/page';
 import Footer from '@/components/Footer/page';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const fetchEventos = async () => {
   try {
@@ -20,63 +21,78 @@ const fetchEventos = async () => {
 
 export default function Eventos() {
   const router = useRouter();
+  const searchInputRef = useRef(null);
 
   const [eventos, setEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
-  const [buscaNome, setBuscaNome] = useState('');
-  const [filtroLocal, setFiltroLocal] = useState('');
-  const [filtroCategoria, setFiltroCategoria] = useState('');
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [eventoSelecionado, setEventoSelecionado] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
+
+  const [tempBuscaNome, setTempBuscaNome] = useState('');
+  const [tempFiltroLocal, setTempFiltroLocal] = useState('');
+  const [tempFiltroCategoria, setTempFiltroCategoria] = useState('');
+  const [tempFiltroData, setTempFiltroData] = useState('');
+
+  const [buscaNomeAplicada, setBuscaNomeAplicada] = useState('');
+  const [filtroLocalAplicado, setFiltroLocalAplicado] = useState('');
+  const [filtroCategoriaAplicada, setFiltroCategoriaAplicada] = useState('');
+  const [filtroDataAplicada, setFiltroDataAplicada] = useState('');
+
+  const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
+  // Novos estados para controlar a abertura individual dos dropdowns de filtro
+  const [showLocalDropdown, setShowLocalDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
+
 
   useEffect(() => {
     const carregarEventos = async () => {
       const data = await fetchEventos();
       setEventos(data);
-      setEventosFiltrados(data);
+      // Ao carregar, inicializa os eventos filtrados com todos os eventos
+      setEventosFiltrados(data); 
     };
     carregarEventos();
   }, []);
 
+  useEffect(() => {
+    const resultado = eventos.filter((evento) => {
+      const nomeMatch = evento.nome_do_evento.toLowerCase().includes(buscaNomeAplicada.toLowerCase());
+      const localMatch = filtroLocalAplicado ? evento.local?.nome === filtroLocalAplicado : true;
+      const categoriaMatch = filtroCategoriaAplicada ? evento.categoria === filtroCategoriaAplicada : true;
+      
+      const dataEvento = new Date(evento.data_hora);
+      const dataFiltro = filtroDataAplicada ? new Date(filtroDataAplicada) : null;
+      const dataMatch = dataFiltro ? dataEvento.toDateString() === dataFiltro.toDateString() : true;
+
+      return nomeMatch && localMatch && categoriaMatch && dataMatch;
+    });
+    setEventosFiltrados(resultado);
+  }, [buscaNomeAplicada, filtroLocalAplicado, filtroCategoriaAplicada, filtroDataAplicada, eventos]);
+
+
   const locaisUnicos = Array.from(new Set(eventos.map(e => e.local?.nome).filter(Boolean)));
   const categoriasUnicas = Array.from(new Set(eventos.map(e => e.categoria).filter(Boolean)));
 
-  const filtrarEventos = () => {
-    const resultado = eventos.filter((evento) => {
-      const nomeMatch = evento.nome_do_evento.toLowerCase().includes(buscaNome.toLowerCase());
-      const localMatch = filtroLocal ? evento.local?.nome === filtroLocal : true;
-      const categoriaMatch = filtroCategoria ? evento.categoria === filtroCategoria : true;
-      return nomeMatch && localMatch && categoriaMatch;
-    });
-
-    setEventosFiltrados(resultado);
+  const aplicarFiltros = () => {
+    setBuscaNomeAplicada(tempBuscaNome);
+    setFiltroLocalAplicado(tempFiltroLocal);
+    setFiltroCategoriaAplicada(tempFiltroCategoria);
+    setFiltroDataAplicada(tempFiltroData);
+    // Fechar todos os dropdowns de filtro após aplicar
+    setShowLocalDropdown(false);
+    setShowCategoryDropdown(false);
+    setShowDateDropdown(false);
   };
 
-  const handleSearchClick = () => {
-    filtrarEventos();
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      aplicarFiltros();
+      if (searchInputRef.current) {
+        searchInputRef.current.blur();
+      }
+    }
   };
 
   const handleViewEvent = (id) => router.push(`/event/${id}`);
-  const handleEditEvent = (id) => router.push(`/editEvent/${id}`);
-
-  const excluirEvento = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:8080/event/${id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        alert('Evento excluído com sucesso!');
-        const atualizados = await fetchEventos();
-        setEventos(atualizados);
-        setEventosFiltrados(atualizados);
-      } else {
-        alert('Erro ao excluir evento.');
-      }
-    } catch (err) {
-      console.error('Erro ao excluir evento:', err);
-    }
-  };
 
   return (
     <div
@@ -85,127 +101,162 @@ export default function Eventos() {
     >
       <Header />
 
-      {/* Barra de busca com o mesmo estilo da Home */}
-      <div className="bg-black w-full h-20 flex items-center justify-center">
-        <div className="relative w-3/4">
+      {/* Barra de busca e Botão de Filtros */}
+      <div className="bg-black w-full h-20 flex items-center justify-center shadow-md">
+        <div className="relative flex items-center w-full max-w-5xl px-4">
           <input
-            className="bg-white rounded-3xl h-10 w-full pl-4 pr-10 p-4 focus:text-black focus:outline-none"
-            placeholder="Buscar por nome do evento..."
-            value={buscaNome}
-            onChange={(e) => setBuscaNome(e.target.value)}
-            onFocus={() => setMostrarFiltros(true)}
+            ref={searchInputRef}
+            className="bg-white rounded-3xl h-10 flex-grow pl-4 pr-10 p-4 focus:text-black focus:outline-none"
+            placeholder="Buscar eventos por nome..."
+            value={tempBuscaNome}
+            onChange={(e) => setTempBuscaNome(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
           <FaSearch
-            onClick={handleSearchClick}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+            onClick={aplicarFiltros}
+            className="absolute right-44 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-[#EE6405] transition-colors"
           />
+
+          {/* Botão para mostrar/esconder o dropdown principal de filtros */}
+          <button
+            onClick={() => setShowFiltersDropdown(!showFiltersDropdown)}
+            className="ml-4 bg-[#EE6405] text-white py-2 px-4 rounded-3xl flex items-center shadow-md hover:bg-[#d65400] transition-colors min-w-[120px] justify-center"
+          >
+            Filtros
+            {showFiltersDropdown ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
+          </button>
         </div>
       </div>
 
-      {/* Filtros (dropdowns) abaixo da barra quando focado */}
-      {mostrarFiltros && (
-        <div className="flex flex-wrap gap-4 justify-center mt-4">
-          <select
-            value={filtroLocal}
-            onChange={(e) => setFiltroLocal(e.target.value)}
-            className="px-4 py-2 rounded-2xl border border-gray-300 shadow bg-white"
-          >
-            <option value="">Todos os Locais</option>
-            {locaisUnicos.map((local) => (
-              <option key={local} value={local}>
-                {local}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filtroCategoria}
-            onChange={(e) => setFiltroCategoria(e.target.value)}
-            className="px-4 py-2 rounded-2xl border border-gray-300 shadow bg-white"
-          >
-            <option value="">Todas as Categorias</option>
-            {categoriasUnicas.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+      {/* Dropdown de Filtros (Local, Categoria, Data) */}
+      {showFiltersDropdown && (
+        <div className="w-full bg-white/90 backdrop-blur-sm shadow-lg py-4 flex flex-wrap justify-center gap-6 z-10 border-b border-gray-200">
+          
+          {/* Filtro de Locais Estilizado */}
+          <div className="relative">
+            <button
+              onClick={() => setShowLocalDropdown(!showLocalDropdown)}
+              className="bg-black text-white font-semibold py-2 px-6 rounded-3xl hover:bg-gray-700 transition-all duration-300 shadow-md flex items-center justify-between min-w-[180px]"
+            >
+              Local: {tempFiltroLocal || 'Todos'}
+              <span className="ml-2">{showLocalDropdown ? '▲' : '▼'}</span>
+            </button>
+            {showLocalDropdown && (
+              <div className="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto ring-1 ring-black ring-opacity-5">
+                <ul className="py-1">
+                  <li>
+                    <button
+                      onClick={() => { setTempFiltroLocal(''); setShowLocalDropdown(false); aplicarFiltros(); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Todos os Locais
+                    </button>
+                  </li>
+                  {locaisUnicos.map((local) => (
+                    <li key={local}>
+                      <button
+                        onClick={() => { setTempFiltroLocal(local); setShowLocalDropdown(false); aplicarFiltros(); }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        {local}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Filtro de Categorias Estilizado */}
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="bg-[#46240C] text-white font-semibold py-2 px-6 rounded-3xl hover:bg-[#46240cbe] transition-all duration-300 shadow-md flex items-center justify-between min-w-[180px]"
+            >
+              Categoria: {tempFiltroCategoria || 'Todas'}
+              <span className="ml-2">{showCategoryDropdown ? '▲' : '▼'}</span>
+            </button>
+            {showCategoryDropdown && (
+              <div className="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto ring-1 ring-black ring-opacity-5">
+                <ul className="py-1">
+                  <li>
+                    <button
+                      onClick={() => { setTempFiltroCategoria(''); setShowCategoryDropdown(false); aplicarFiltros(); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Todas as Categorias
+                    </button>
+                  </li>
+                  {categoriasUnicas.map((cat) => (
+                    <li key={cat}>
+                      <button
+                        onClick={() => { setTempFiltroCategoria(cat); setShowCategoryDropdown(false); aplicarFiltros(); }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        {cat}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Filtro de Data Estilizado */}
+          <div className="relative">
+            <input
+              type="date"
+              value={tempFiltroData}
+              onChange={(e) => { setTempFiltroData(e.target.value); aplicarFiltros(); }}
+              className="px-4 py-2 rounded-3xl border border-gray-300 shadow bg-white text-black focus:outline-none focus:border-[#EE6405] font-semibold"
+            />
+          </div>
         </div>
       )}
 
-      {/* Conteúdo principal */}
+      {/* Conteúdo principal com a lista de eventos */}
       <main className="flex-grow p-10 flex flex-col items-center">
-        <h1 className="text-4xl font-bold text-[#EE6405] mb-6">Eventos</h1>
-
-        <button
-          className="bg-[#EE6405] text-white font-semibold py-2 px-6 rounded-2xl hover:bg-[#d65400] mb-6 shadow-lg"
-          onClick={() => router.push('/createEvent')}
-        >
-          Criar Evento
-        </button>
-
-        {/* Tabela */}
-        <div className="flex flex-wrap justify-center gap-12 pt-8">
-  {eventosFiltrados.length === 0 ? (
-    <p className="text-4xl font-bold text-[#EE6405] mb-6">Nenhum evento encontrado.</p>
-  ) : (
-    eventosFiltrados.map((evento) => (
-      <div
-        key={evento.idEvento}
-        className="flex flex-col items-center hover:translate-y-1 transition-transform cursor-pointer"
-        onClick={() => handleViewEvent(evento.idEvento)}
-      >
-        <div className="w-64 h-80 bg-white shadow-md rounded-t-md mb-4 text-left">
-          <img
-            className="w-full h-3/4 rounded-t-md object-cover"
-            src={`/${evento.url_imagem}.jpg`}
-            alt={evento.nome_do_evento}
-          />
-          <div className="px-3 py-2">
-            <p className="text-black font-lato font-bold text-md">
-              {evento.nome_do_evento}
-            </p>
-            <p className="text-gray-500 font-lato text-sm">
-              {evento.local?.nome || 'Local não informado'} - {evento.data_hora}
-            </p>
-            <p className="text-black font-extrabold font-lato">
-              R${evento.preco},00
-            </p>
-          </div>
+        <div className="flex flex-wrap justify-center gap-12 pt-8 max-w-5xl mx-auto">
+          {eventosFiltrados.length === 0 ? (
+            <p className="text-xl font-medium text-gray-700">Nenhum evento encontrado com os filtros aplicados.</p>
+          ) : (
+            eventosFiltrados.map((evento) => (
+              <div
+                key={evento.idEvento}
+                className="flex flex-col items-center hover:translate-y-1 transition-transform cursor-pointer"
+                onClick={() => handleViewEvent(evento.idEvento)}
+              >
+                <div className="w-64 h-80 bg-white shadow-md rounded-t-md mb-4 text-left">
+                  <Image
+                    className="w-full h-3/4 rounded-t-md object-cover"
+                    src={`/${evento.url_imagem}.jpg`}
+                    alt={evento.nome_do_evento}
+                    width={256}
+                    height={240}
+                    priority
+                  />
+                  <div className="px-3 py-2">
+                    <p className="text-black font-lato font-bold text-md">
+                      {evento.nome_do_evento}
+                    </p>
+                    <p className="text-gray-500 font-lato text-sm">
+                      {evento.local?.nome || 'Local não informado'} - {new Date(evento.data_hora).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className="text-black font-extrabold font-lato">
+                      R$ {evento.preco ? evento.preco.toFixed(2).replace('.', ',') : '0,00'}
+                    </p>
+                    <p className="text-[#EE6405] text-sm font-semibold mt-1">
+                       Categoria: {evento.categoria || 'Não informada'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      </div>
-    ))
-  )}
-</div>
       </main>
 
       <Footer />
-
-      {/* Popup de confirmação */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-96 text-center">
-            <h2 className="text-xl font-semibold mb-4 text-black">Tem certeza que deseja excluir?</h2>
-            <p className="mb-4 text-black">{eventoSelecionado?.nome_do_evento}</p>
-            <div className="flex justify-center gap-4">
-              <button
-                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
-                onClick={() => {
-                  excluirEvento(eventoSelecionado.idEvento);
-                  setShowPopup(false);
-                }}
-              >
-                Excluir
-              </button>
-              <button
-                className="bg-gray-300 py-2 px-4 rounded hover:bg-gray-400"
-                onClick={() => setShowPopup(false)}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

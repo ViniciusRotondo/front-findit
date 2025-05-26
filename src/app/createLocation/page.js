@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react'; // para autenticação
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Header from '@/components/Header/page'; // Importa o Header
+import Footer from '@/components/Footer/page'; // Importa o Footer
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Para os ícones de dropdown
 
 export default function CreateLocation() {
   const { data: session, status } = useSession();
@@ -24,6 +27,10 @@ export default function CreateLocation() {
   const [loadingCities, setLoadingCities] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Estados para controlar a abertura dos dropdowns estilizados
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+
   // Proteção da página: só organizadores autenticados
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -34,9 +41,14 @@ export default function CreateLocation() {
   // Pega os estados no backend ao carregar a página
   useEffect(() => {
     async function fetchStates() {
-      const res = await fetch('http://localhost:8080/state'); // ajuste para sua rota real
-      const data = await res.json();
-      setStates(data);
+      try {
+        const res = await fetch('http://localhost:8080/state'); // ajuste para sua rota real
+        if (!res.ok) throw new Error('Falha ao buscar estados');
+        const data = await res.json();
+        setStates(data);
+      } catch (error) {
+        console.error("Erro ao buscar estados:", error);
+      }
     }
     fetchStates();
   }, []);
@@ -49,26 +61,38 @@ export default function CreateLocation() {
     }
     async function fetchCities() {
       setLoadingCities(true);
-      const res = await fetch(`http://localhost:8080/city/state/${form.estado_id}`); // ajuste rota conforme backend
-      const data = await res.json();
-      console.log('Cidades:', data); 
-      setCities(data);
-      setLoadingCities(false);
+      try {
+        const res = await fetch(`http://localhost:8080/city/state/${form.estado_id}`); // ajuste rota conforme backend
+        if (!res.ok) throw new Error('Falha ao buscar cidades');
+        const data = await res.json();
+        setCities(data);
+      } catch (error) {
+        console.error("Erro ao buscar cidades:", error);
+        setCities([]); // Garante que a lista de cidades seja limpa em caso de erro
+      } finally {
+        setLoadingCities(false);
+      }
     }
     fetchCities();
   }, [form.estado_id]);
 
-  // Manipula mudanças no formulário
+  // Manipula mudanças no formulário para inputs normais
   function handleChange(e) {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   }
 
+  // Manipula mudanças para selects estilizados (dropdowns)
+  function handleSelectChange(name, value, dropdownSetter) {
+    setForm(prev => ({ ...prev, [name]: value }));
+    if (dropdownSetter) {
+      dropdownSetter(false); // Fecha o dropdown após a seleção
+    }
+  }
+
   // Envia o formulário
   async function handleSubmit(e) {
     e.preventDefault();
-
-    // validar aqui se quiser
 
     const payload = {
       nome: form.nome,
@@ -80,139 +104,233 @@ export default function CreateLocation() {
       cidade_id: form.cidade_id,
     };
 
-    const res = await fetch('http://localhost:8080/location', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch('http://localhost:8080/location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (res.ok) {
-      setModalOpen(true);
-      setTimeout(() => {
-        setModalOpen(false);
-        router.push('/alguma-pagina'); // página após sucesso
-      }, 2000);
-    } else {
-      alert('Erro ao criar local');
+      if (res.ok) {
+        setModalOpen(true);
+        setTimeout(() => {
+          setModalOpen(false);
+          router.push('/eventos'); // Redireciona para a página de eventos, ou outra de sua escolha
+        }, 2000);
+      } else {
+        const errorData = await res.json();
+        alert(`Erro ao criar local: ${errorData.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error('Erro ao criar local:', err);
+      alert('Erro de conexão ao criar local.');
     }
   }
 
   if (status === 'loading') {
-    return <p>Carregando...</p>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-white font-lato">
+        <p className="text-xl font-medium text-[#EE6405]">Carregando...</p>
+      </div>
+    );
   }
 
-  return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Cadastrar Novo Local</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1 font-semibold">Nome</label>
-          <input
-            type="text"
-            name="nome"
-            value={form.nome}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">Endereço</label>
-          <input
-            type="text"
-            name="endereco"
-            value={form.endereco}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">Capacidade de Pessoas</label>
-          <input
-            type="number"
-            name="capacidade_de_pessoas"
-            value={form.capacidade_de_pessoas}
-            onChange={handleChange}
-            required
-            min={1}
-            className="w-full border rounded p-2"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">URL do Mapa</label>
-          <input
-            type="url"
-            name="url_mapa"
-            value={form.url_mapa}
-            onChange={handleChange}
-            className="w-full border rounded p-2"
-            placeholder="https://maps.google.com/?q=..."
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">Telefone</label>
-          <input
-            type="tel"
-            name="telefone"
-            value={form.telefone}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">Estado</label>
-          <select
-            name="estado_id"
-            value={form.estado_id}
-            onChange={handleChange}
-            required
-            className="w-full border rounded p-2"
-          >
-            <option value="">Selecione o estado</option>
-            {states.map((state) => (
-              <option key={state.sigla} value={state.sigla}>
-                {state.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1 font-semibold">Cidade</label>
-          <select
-            name="cidade_id"
-            value={form.cidade_id}
-            onChange={handleChange}
-            required
-            disabled={!form.estado_id || loadingCities}
-            className="w-full border rounded p-2"
-          >
-            <option value="">
-              {loadingCities ? 'Carregando cidades...' : 'Selecione a cidade'}
-            </option>
-            {cities.map((city) => (
-              <option key={city.id} value={city.id}>
-                {city.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Cadastrar Local
-        </button>
-      </form>
+  // Classes de estilização
+  const inputClasses = "border border-gray-300 w-full p-3 rounded-3xl focus:outline-none focus:ring-2 focus:ring-[#EE6405] focus:border-transparent text-black font-normal bg-white";
+  const labelClasses = "text-black font-semibold mb-1 block";
+  const selectButtonClasses = `${inputClasses} flex items-center justify-between cursor-pointer`;
 
+
+  return (
+    <>
+      <Header />
+      
+      {/* Container principal com o background da página */}
+      <div 
+        className="flex-grow bg-cover bg-center font-lato text-black py-10"
+        style={{ backgroundImage: "url('/page1.png')" }}
+      >
+        {/* Quadro branco do formulário */}
+        <div className="mx-auto max-w-4xl w-full px-4 py-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
+          <h1 className="text-3xl font-extrabold text-black mb-4 font-lato text-center">CADASTRO DE NOVO LOCAL</h1>
+          <hr className="border-black mb-8 border-t-2 w-full" />
+
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            {/* Coluna Esquerda */}
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="nome" className={labelClasses}>Nome do Local</label>
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  value={form.nome}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="endereco" className={labelClasses}>Endereço</label>
+                <input
+                  type="text"
+                  id="endereco"
+                  name="endereco"
+                  value={form.endereco}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="capacidade_de_pessoas" className={labelClasses}>Capacidade de Pessoas</label>
+                <input
+                  type="number"
+                  id="capacidade_de_pessoas"
+                  name="capacidade_de_pessoas"
+                  value={form.capacidade_de_pessoas}
+                  onChange={handleChange}
+                  min={1}
+                  className={inputClasses}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Coluna Direita */}
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="url_mapa" className={labelClasses}>URL do Mapa</label>
+                <input
+                  type="url"
+                  id="url_mapa"
+                  name="url_mapa"
+                  value={form.url_mapa}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Ex: http://maps.google.com/link-do-local"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="telefone" className={labelClasses}>Telefone</label>
+                <input
+                  type="tel"
+                  id="telefone"
+                  name="telefone"
+                  value={form.telefone}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  required
+                />
+              </div>
+
+              {/* Drilldown de Estado Estilizado */}
+              <div className="relative z-10">
+                <label htmlFor="estado_id" className={labelClasses}>Estado</label>
+                <button
+                  type="button"
+                  onClick={() => setShowStateDropdown(!showStateDropdown)}
+                  className={selectButtonClasses}
+                  required // Necessário para validação de formulário
+                >
+                  {states.find(s => s.sigla === form.estado_id)?.nome || "Selecione o estado"}
+                  {showStateDropdown ? <FaChevronUp className="ml-2 text-gray-500" /> : <FaChevronDown className="ml-2 text-gray-500" />}
+                </button>
+                {showStateDropdown && (
+                  <div className="absolute w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                    <ul className="py-1">
+                      <li key="empty_state">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectChange('estado_id', '', setShowStateDropdown)}
+                          className="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          Selecione o estado
+                        </button>
+                      </li>
+                      {states.map(state => (
+                        <li key={state.sigla}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectChange('estado_id', state.sigla, setShowStateDropdown)}
+                            className="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100"
+                          >
+                            {state.nome}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Drilldown de Cidade Estilizado */}
+              <div className="relative z-0">
+                <label htmlFor="cidade_id" className={labelClasses}>Cidade</label>
+                <button
+                  type="button"
+                  onClick={() => setShowCityDropdown(!showCityDropdown)}
+                  className={`${selectButtonClasses} ${(!form.estado_id || loadingCities) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!form.estado_id || loadingCities}
+                  required
+                >
+                  {loadingCities ? 'Carregando cidades...' : cities.find(c => c.id === form.cidade_id)?.nome || "Selecione a cidade"}
+                  {showCityDropdown ? <FaChevronUp className="ml-2 text-gray-500" /> : <FaChevronDown className="ml-2 text-gray-500" />}
+                </button>
+                {showCityDropdown && (
+                  <div className="absolute w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                    <ul className="py-1">
+                      <li key="empty_city">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectChange('cidade_id', '', setShowCityDropdown)}
+                          className="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          Selecione a cidade
+                        </button>
+                      </li>
+                      {cities.map(city => (
+                        <li key={city.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectChange('cidade_id', city.id, setShowCityDropdown)}
+                            className="block w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100"
+                          >
+                            {city.nome}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Botão de Cadastrar Local - Ocupa a largura total na parte inferior */}
+            <div className="md:col-span-2 mt-4">
+              <button
+                type="submit"
+                className="w-full bg-[#EE6405] text-white font-bold py-3 rounded-lg hover:bg-[#d65500] transition-all shadow-lg text-lg"
+              >
+                Cadastrar Local
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <Footer />
+
+      {/* Modal de sucesso */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow">
-            <p className="text-green-600 font-semibold">Local cadastrado com sucesso!</p>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-96 text-center">
+            <p className="text-green-600 font-semibold text-lg">Local cadastrado com sucesso!</p>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

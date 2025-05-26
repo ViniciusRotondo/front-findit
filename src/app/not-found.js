@@ -18,7 +18,7 @@ export default function NotFoundPage() {
                         Opa! Parece que a página que você está procurando não existe ou foi movida.
                     </p>
                     <Link
-                        href="/home"
+                        href="/"
                         className="text-white bg-[#EE6405] px-6 py-2 rounded-full font-semibold hover:bg-[#FFA567] transition-colors duration-300"
                     >
                         Voltar para a página inicial
