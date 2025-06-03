@@ -21,9 +21,12 @@ export const authOptions = {
             { headers: { "Content-Type": "application/json" } }
           );
 
+          console.log("Resposta da API:", res.data); 
+
           // Se chegou aqui, status foi 2xx
           const user = res.data;
-          return { id: user.id, nome: user.nome };
+          console.log("Usuário logado:", user); 
+          return { id: user.id, nome: user.nome, cpf: user.cpf };
 
         } catch (err) {
           // Se deu erro 4xx/5xx, retorna null pro NextAuth
@@ -38,12 +41,14 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.nome = user.nome;
+        token.cpf = user.cpf;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.nome = token.nome;
+      session.user.cpf = token.cpf;
       return session;
     }
   }

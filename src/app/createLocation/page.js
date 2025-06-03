@@ -31,18 +31,17 @@ export default function CreateLocation() {
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
-  // Proteção da página: só organizadores autenticados
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.replace('/login'); // redireciona para login se não autenticado
+      router.replace('/login'); 
     }
   }, [status, router]);
 
-  // Pega os estados no backend ao carregar a página
+  
   useEffect(() => {
     async function fetchStates() {
       try {
-        const res = await fetch('http://localhost:8080/state'); // ajuste para sua rota real
+        const res = await fetch('http://localhost:8080/state'); 
         if (!res.ok) throw new Error('Falha ao buscar estados');
         const data = await res.json();
         setStates(data);
@@ -62,7 +61,7 @@ export default function CreateLocation() {
     async function fetchCities() {
       setLoadingCities(true);
       try {
-        const res = await fetch(`http://localhost:8080/city/state/${form.estado_id}`); // ajuste rota conforme backend
+        const res = await fetch(`http://localhost:8080/city`); // ajuste rota conforme backend
         if (!res.ok) throw new Error('Falha ao buscar cidades');
         const data = await res.json();
         setCities(data);
@@ -102,6 +101,7 @@ export default function CreateLocation() {
       telefone: form.telefone,
       estado_id: form.estado_id,
       cidade_id: form.cidade_id,
+      pais_id: 'BR' 
     };
 
     try {

@@ -9,6 +9,7 @@ import { useState } from "react";
 
 export default function Header() {
   const { data: session } = useSession();
+  console.log("Sessão atual:", session);
   const [isDropdownOpen, setDropdownOpen] = useState(false); // Para controle do dropdown
 
   const toggleDropdown = () => setDropdownOpen(!isDropdownOpen); // Alterna o estado do dropdown
@@ -26,11 +27,7 @@ export default function Header() {
                 EVENTOS
               </Link>
             </li>
-            <li>
-              <Link href="/meus-eventos" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
-                MEUS EVENTOS
-              </Link>
-            </li>
+          
             <li>
               <Link href="/sobre-nos" className="hover:text-[#EE6405] transition-all ease-in-out duration-500 font-lato font-semibold">
                 SOBRE NÓS
@@ -59,9 +56,15 @@ export default function Header() {
                   <Link href="/meus-dados" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
                     Meus dados
                   </Link>
-                  <Link href="/meus-eventos" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
-                    Meus eventos
-                  </Link>
+                  {session?.user?.cpf ? (
+                    <Link href="/meus-eventos" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
+                      Meus eventos
+                    </Link>
+                  ) : (
+                    <Link href="/eventos-curtidos" className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors">
+                      Eventos curtidos
+                    </Link>
+                  )}
                   <button
                     onClick={() => signOut()}
                     className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 transition-colors"

@@ -18,7 +18,9 @@ const fetchEventos = async () => {
   }
 };
 
-export default function Eventos() {
+export default function MeusEventos() {
+  const [idOrganizador, setIdOrganizador] = useState(null);
+
   const router = useRouter();
 
   const [eventos, setEventos] = useState([]);
@@ -30,12 +32,28 @@ export default function Eventos() {
   const [eventoSelecionado, setEventoSelecionado] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
 
+
   useEffect(() => {
     const carregarEventos = async () => {
-      const data = await fetchEventos();
-      setEventos(data);
-      setEventosFiltrados(data);
+      // Pega os dados do usuário logado da sessionStorage
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado'));
+
+      // Verifica se é um organizador (usuário que tem CPF)
+      if (!user?.cpf || !user?.idOrganizador) {
+        console.warn('Usuário não é organizador ou dados incompletos.');
+        return;
+      }
+
+      const todosEventos = await fetchEventos();
+
+      // Filtra os eventos criados por esse organizador
+      const meusEventos = todosEventos.filter(
+        (evento) => evento.organizador?.idOrganizador === user.idOrganizador
+      );
+
+      setEventos(meusEventos);
     };
+
     carregarEventos();
   }, []);
 
@@ -59,6 +77,13 @@ export default function Eventos() {
 
   const handleViewEvent = (id) => router.push(`/event/${id}`);
   const handleEditEvent = (id) => router.push(`/editEvent/${id}`);
+
+  useEffect(() => {
+  const organizadorLogado = JSON.parse(localStorage.getItem('usuarioLogado'));
+  if (organizadorLogado) {
+    setIdOrganizador(organizadorLogado.idOrganizador); // ou organizadorLogado.cpf
+  }
+}, []);
 
   const excluirEvento = async (id) => {
     try {

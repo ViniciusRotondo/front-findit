@@ -1,6 +1,7 @@
-// eventos/page.js
+
 'use client';
 
+import { useSession } from "next-auth/react";
 import React, { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import Header from '@/components/Header/page';
@@ -23,6 +24,8 @@ export default function Eventos() {
   const router = useRouter();
   const searchInputRef = useRef(null);
 
+  const { data: session } = useSession();
+  
   const [eventos, setEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
 
@@ -48,7 +51,7 @@ export default function Eventos() {
       const data = await fetchEventos();
       setEventos(data);
       // Ao carregar, inicializa os eventos filtrados com todos os eventos
-      setEventosFiltrados(data); 
+      setEventosFiltrados(data);
     };
     carregarEventos();
   }, []);
@@ -58,7 +61,7 @@ export default function Eventos() {
       const nomeMatch = evento.nome_do_evento.toLowerCase().includes(buscaNomeAplicada.toLowerCase());
       const localMatch = filtroLocalAplicado ? evento.local?.nome === filtroLocalAplicado : true;
       const categoriaMatch = filtroCategoriaAplicada ? evento.categoria === filtroCategoriaAplicada : true;
-      
+
       const dataEvento = new Date(evento.data_hora);
       const dataFiltro = filtroDataAplicada ? new Date(filtroDataAplicada) : null;
       const dataMatch = dataFiltro ? dataEvento.toDateString() === dataFiltro.toDateString() : true;
@@ -131,7 +134,7 @@ export default function Eventos() {
       {/* Dropdown de Filtros (Local, Categoria, Data) */}
       {showFiltersDropdown && (
         <div className="w-full bg-white/90 backdrop-blur-sm shadow-lg py-4 flex flex-wrap justify-center gap-6 z-10 border-b border-gray-200">
-          
+
           {/* Filtro de Locais Estilizado */}
           <div className="relative">
             <button
@@ -214,6 +217,18 @@ export default function Eventos() {
         </div>
       )}
 
+      {session?.user?.cpf ? (
+        <button
+          className="bg-[#EE6405] text-white font-semibold py-2 px-6 rounded-2xl hover:bg-[#d65400] mb-6 shadow-lg"
+          onClick={() => router.push('/createEvent')}
+        >
+          Criar Evento
+        </button>
+      ) : (
+        null
+      )}
+
+
       {/* Conteúdo principal com a lista de eventos */}
       <main className="flex-grow p-10 flex flex-col items-center">
         <div className="flex flex-wrap justify-center gap-12 pt-8 max-w-5xl mx-auto">
@@ -246,7 +261,7 @@ export default function Eventos() {
                       R$ {evento.preco ? evento.preco.toFixed(2).replace('.', ',') : '0,00'}
                     </p>
                     <p className="text-[#EE6405] text-sm font-semibold mt-1">
-                       Categoria: {evento.categoria || 'Não informada'}
+                      Categoria: {evento.categoria?.nome || 'Não informada'}
                     </p>
                   </div>
                 </div>
