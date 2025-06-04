@@ -26,7 +26,7 @@ export const authOptions = {
           // Se chegou aqui, status foi 2xx
           const user = res.data;
           console.log("Usuário logado:", user); 
-          return { id: user.id, nome: user.nome, cpf: user.cpf };
+          return { id: user.id, nome: user.nome, cpf: user.cpf, tipo: user.tipo };
 
         } catch (err) {
           // Se deu erro 4xx/5xx, retorna null pro NextAuth
@@ -42,6 +42,7 @@ export const authOptions = {
         token.id = user.id;
         token.nome = user.nome;
         token.cpf = user.cpf;
+        token.tipo = user.tipo;
       }
       return token;
     },
@@ -49,6 +50,7 @@ export const authOptions = {
       session.user.id = token.id;
       session.user.nome = token.nome;
       session.user.cpf = token.cpf;
+      session.user.tipo = token.tipo;
       return session;
     }
   }

@@ -9,7 +9,6 @@ import { useState } from "react";
 
 export default function Header() {
   const { data: session } = useSession();
-  console.log("Sessão atual:", session);
   const [isDropdownOpen, setDropdownOpen] = useState(false); // Para controle do dropdown
 
   const toggleDropdown = () => setDropdownOpen(!isDropdownOpen); // Alterna o estado do dropdown
@@ -66,7 +65,7 @@ export default function Header() {
                     </Link>
                   )}
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => signOut({ callbackUrl: '/'})}
                     className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 transition-colors"
                   >
                     Sair

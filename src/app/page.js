@@ -108,9 +108,6 @@ export default function Home() {
                                     </button>
                                 </div>
                             ))}
-                            <button className="bg-black text-white w-2/6 hover:bg-gray-900 transition-all duration-300 ease-in-out text-md p-2 mb-4 font-lato">
-                                MOSTRAR MAIS EVENTOS
-                            </button>
                         </div>
                     </div>
                 </div>
