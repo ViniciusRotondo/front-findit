@@ -25,6 +25,7 @@ const ViewEvent = () => {
         setEvento(response.data);
       } catch (error) {
         console.error("Erro ao buscar evento:", error);
+        // Opcional: redirecionar ou mostrar mensagem de erro se o evento não for encontrado
       }
     };
 
@@ -33,6 +34,7 @@ const ViewEvent = () => {
 
   const handleLikeClick = () => {
     setIsLiked(!isLiked);
+    // Aqui você adicionaria a lógica para interagir com o backend de curtidas
   };
 
   if (!evento) {
@@ -43,13 +45,17 @@ const ViewEvent = () => {
     );
   }
 
+  // Verificar se a URL do mapa existe e é válida
+  const mapUrl = evento.local?.url_mapa;
+  const isMapUrlValid = mapUrl && mapUrl.startsWith('http'); // Uma verificação básica de URL
+
   return (
     <div className="flex flex-col min-h-screen font-lato text-black">
       <Header />
 
       <main
         className="flex-grow flex flex-col items-center px-4 py-10 bg-cover bg-center"
-        style={{ backgroundImage: "url('/page1.png')" }} // AQUI ESTÁ A MUDANÇA
+        style={{ backgroundImage: "url('/page1.png')" }}
       >
         {/* Adicione uma sobreposição para melhorar a legibilidade do conteúdo sobre o background */}
         <div className="w-full max-w-4xl bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-xl flex flex-col items-center">
@@ -129,10 +135,35 @@ const ViewEvent = () => {
                 </button>
             </div>
 
-            {/* Coluna Lateral - Poderia ser para mapa, ingressos, etc. Por enquanto, vazia para manter a estrutura */}
-            <div className="flex-1 bg-white rounded-xl shadow-lg p-8 border border-gray-200 flex flex-col items-center justify-center">
-                <h2 className="text-2xl font-bold text-black mb-6 text-center">Mais Informações</h2>
-                <p className="text-gray-500 text-center">Conteúdo adicional como mapa do local ou opções de ingresso podem ser adicionados aqui futuramente.</p>
+            {/* Coluna Lateral - Agora com o Mapa do Google */}
+            <div className="flex-1 bg-white rounded-xl shadow-lg p-8 border border-gray-200 flex flex-col items-center">
+                <h2 className="text-2xl font-bold text-black mb-6 text-center">Localização do Evento</h2>
+                {isMapUrlValid ? (
+                    <div className="w-full h-80 rounded-lg overflow-hidden shadow-md border border-gray-300">
+                        <iframe
+                            src={mapUrl}
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title={`Mapa de ${evento.nome_do_evento}`}
+                        ></iframe>
+                    </div>
+                ) : (
+                    <div className="text-gray-500 text-center py-10">
+                        <FaMapMarkerAlt className="text-6xl text-gray-400 mb-4" />
+                        <p>Mapa não disponível para este local.</p>
+                        {evento.local?.nome && <p className="mt-2 text-black font-semibold">{evento.local.nome}</p>}
+                    </div>
+                )}
+                {/* Se quiser adicionar o endereço completo do local aqui também */}
+                {evento.local?.endereco && isMapUrlValid && (
+                    <p className="text-gray-700 mt-4 text-center text-sm">
+                        Endereço: {evento.local.endereco}
+                    </p>
+                )}
             </div>
             </div>
 

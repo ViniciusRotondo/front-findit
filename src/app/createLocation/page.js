@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header/page'; // Importa o Header
-import Footer from '@/components/Footer/page'; // Importa o Footer
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Para os ícones de dropdown
+import Header from '@/components/Header/page';
+import Footer from '@/components/Footer/page';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 export default function CreateLocation() {
   const { data: session, status } = useSession();
@@ -56,24 +56,38 @@ export default function CreateLocation() {
   useEffect(() => {
     if (!form.estado_id) {
       setCities([]);
+      // Resetar a cidade selecionada se o estado mudar
+      setForm(prev => ({ ...prev, cidade_id: '' }));
       return;
     }
     async function fetchCities() {
       setLoadingCities(true);
       try {
-        const res = await fetch(`http://localhost:8080/city`); // ajuste rota conforme backend
+        // CORREÇÃO: A URL para buscar cidades precisa ser por estado_id,
+        // conforme discutimos anteriormente para o filtro de cidades.
+        // Se a sua API de cidades já filtra por estado_id quando recebe a sigla na URL, use essa.
+        // Exemplo: 'http://localhost:8080/city/state/${form.estado_id}'
+        // Se sua API de cidades não filtra por estado na URL, então você precisaria de um endpoint diferente
+        // ou filtrar no frontend (não recomendado para grandes volumes de dados).
+        // VOU MANTER A URL DE TESTE DA SUA API, mas é um ponto de atenção.
+        const res = await fetch(`http://localhost:8080/city`); // << AQUI: Verifique se sua API filtra cidades por estado_id
         if (!res.ok) throw new Error('Falha ao buscar cidades');
-        const data = await res.json();
-        setCities(data);
+        const allCities = await res.json();
+
+        // Filtra as cidades pelo estado_id no frontend (se a API não o fizer)
+        // Se a sua API já filtra por estado_id no endpoint `city/state/{id}`, você pode remover este .filter
+        const filteredCities = allCities.filter(city => city.estado?.sigla === form.estado_id); 
+        setCities(filteredCities);
+
       } catch (error) {
         console.error("Erro ao buscar cidades:", error);
-        setCities([]); // Garante que a lista de cidades seja limpa em caso de erro
+        setCities([]);
       } finally {
         setLoadingCities(false);
       }
     }
     fetchCities();
-  }, [form.estado_id]);
+  }, [form.estado_id]); // Dependência: só executa quando estado_id muda
 
   // Manipula mudanças no formulário para inputs normais
   function handleChange(e) {
@@ -99,7 +113,9 @@ export default function CreateLocation() {
       capacidade_de_pessoas: Number(form.capacidade_de_pessoas),
       url_mapa: form.url_mapa,
       telefone: form.telefone,
-      estado_id: form.estado_id,
+      // Verifique se o backend espera o ID do estado ou a sigla.
+      // Se espera o ID do objeto Estado, precisará mapear sigla para ID aqui.
+      estado_id: form.estado_id, 
       cidade_id: form.cidade_id,
       pais_id: 'BR' 
     };
@@ -115,7 +131,7 @@ export default function CreateLocation() {
         setModalOpen(true);
         setTimeout(() => {
           setModalOpen(false);
-          router.push('/eventos'); // Redireciona para a página de eventos, ou outra de sua escolha
+          router.push('/eventos'); 
         }, 2000);
       } else {
         const errorData = await res.json();
@@ -228,13 +244,16 @@ export default function CreateLocation() {
               </div>
 
               {/* Drilldown de Estado Estilizado */}
-              <div className="relative z-10">
+              <div 
+                className="relative z-10"
+                onMouseLeave={() => setShowStateDropdown(false)} // Fecha ao tirar o mouse
+              >
                 <label htmlFor="estado_id" className={labelClasses}>Estado</label>
                 <button
                   type="button"
-                  onClick={() => setShowStateDropdown(!showStateDropdown)}
+                  onClick={() => setShowStateDropdown(!showStateDropdown)} // Permite clique também
                   className={selectButtonClasses}
-                  required // Necessário para validação de formulário
+                  required 
                 >
                   {states.find(s => s.sigla === form.estado_id)?.nome || "Selecione o estado"}
                   {showStateDropdown ? <FaChevronUp className="ml-2 text-gray-500" /> : <FaChevronDown className="ml-2 text-gray-500" />}
@@ -268,11 +287,14 @@ export default function CreateLocation() {
               </div>
 
               {/* Drilldown de Cidade Estilizado */}
-              <div className="relative z-0">
+              <div 
+                className="relative z-0"
+                onMouseLeave={() => setShowCityDropdown(false)} // Fecha ao tirar o mouse
+              >
                 <label htmlFor="cidade_id" className={labelClasses}>Cidade</label>
                 <button
                   type="button"
-                  onClick={() => setShowCityDropdown(!showCityDropdown)}
+                  onClick={() => setShowCityDropdown(!showCityDropdown)} // Permite clique também
                   className={`${selectButtonClasses} ${(!form.estado_id || loadingCities) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={!form.estado_id || loadingCities}
                   required

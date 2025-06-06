@@ -104,13 +104,14 @@ export default function CreateEvent() {
 
   return (
     <>
-      <Header /> {/* Header fica fora do div de background */}
+      <Header />
       
       {/* Container principal com o background da página */}
       <div 
-        className="flex-grow bg-cover bg-center font-lato text-black py-10" // Adicionado py-10 para espaçamento
+        className="flex-grow bg-cover bg-center font-lato text-black py-10"
         style={{ backgroundImage: "url('/page1.png')" }}
       >
+        {/* Quadro branco do formulário */}
         <div className="mx-auto max-w-6xl w-full px-4 py-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
           <h1 className="text-3xl font-extrabold text-black mb-4 font-lato text-center">CADASTRO DE EVENTO</h1>
           <hr className="border-black mb-8 border-t-2 w-full" />
@@ -171,7 +172,10 @@ export default function CreateEvent() {
               </div>
 
                {/* Dropdown de Status estilizado */}
-               <div className="relative z-10">
+               <div 
+                 className="relative z-10"
+                 onMouseLeave={() => setShowStatusDropdown(false)} // Adicionado para fechar ao sair do mouse
+               >
                 <label htmlFor="status" className={labelClasses}>Status</label>
                 <button
                   type="button"
@@ -258,7 +262,10 @@ export default function CreateEvent() {
               </div>
 
               {/* Drilldown de Local Estilizado e Botão "Cadastrar Local" ao lado */}
-              <div className="relative z-0">
+              <div 
+                className="relative z-0"
+                onMouseLeave={() => setShowLocalDropdown(false)} // Adicionado para fechar ao sair do mouse
+              >
                 <label htmlFor="local_id" className={labelClasses}>Local</label>
                 <div className="flex items-center gap-2"> {/* Flex container para o select e o botão */}
                     <button
@@ -298,7 +305,10 @@ export default function CreateEvent() {
               </div>
 
               {/* Drilldown de Categoria Estilizado (sem botão ao lado) */}
-              <div className="relative z-0">
+              <div 
+                className="relative z-0"
+                onMouseLeave={() => setShowCategoryDropdown(false)} // Adicionado para fechar ao sair do mouse
+              >
                 <label htmlFor="categoria_id" className={labelClasses}>Categoria</label>
                 <button
                   type="button"
