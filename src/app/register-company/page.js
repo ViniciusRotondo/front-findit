@@ -3,26 +3,124 @@
 import Header from "@/components/Header/page";
 import Footer from "@/components/Footer/page";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useEffect } from "react";
+import { useState } from "react"; // Removido useEffect e useSession pois este cadastro cria o user/org do zero
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function CadastroOrg() {
-  const { data: session, status } = useSession();
   const router = useRouter();
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login"); // redireciona pra login se não estiver logado
+  // Renomeado para formDataOrganizer para clareza
+  const [formDataOrganizer, setFormDataOrganizer] = useState({
+    nome: "", // Nome do usuário/responsável
+    email: "",
+    senha: "",
+    confirmarSenha: "", // Campo adicional para validação no frontend
+    cnpj: "",
+    cpf: "",
+    endereco_empresa: "",
+    nome_empresa: "",
+  });
+
+  const alertaBonitao = (mensagem, tipo) => {
+    toast[tipo || 'success'](mensagem, { // 'success' como tipo padrão
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormDataOrganizer({
+      ...formDataOrganizer,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Form data for Organizer:", formDataOrganizer);
+
+    // Validação dos campos
+    const requiredFields = [
+      'nome', 'email', 'senha', 'confirmarSenha', 
+      'cnpj', 'cpf', 'endereco_empresa', 'nome_empresa'
+    ];
+    for (const field of requiredFields) {
+      if (!formDataOrganizer[field]) {
+        alertaBonitao(`Por favor, preencha o campo ${field.replace(/_/g, ' ')}!`, 'error');
+        return;
+      }
     }
-  }, [status, router]);
 
-  if (status === "loading") {
-    // Enquanto carrega a sessão, pode mostrar um loading ou nada
-    return <p>Carregando...</p>;
-  }
+    // Validação de e-mail
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(formDataOrganizer.email)) {
+      alertaBonitao('Por favor, insira um e-mail válido!', 'error');
+      return;
+    }
 
-  // Se chegou aqui, o usuário está autenticado
+    // Validação de senha
+    if (formDataOrganizer.senha.length < 6) {
+      alertaBonitao('A senha deve ter pelo menos 6 caracteres!', 'error');
+      return;
+    }
+    if (formDataOrganizer.senha !== formDataOrganizer.confirmarSenha) {
+      alertaBonitao('As senhas não coincidem!', 'error');
+      return;
+    }
+    
+    // Validação de CNPJ e CPF (pode ser mais robusta, mas aqui é um exemplo simples)
+    if (formDataOrganizer.cnpj.length < 14) { // Exemplo simples, CNPJ tem 14 dígitos
+        alertaBonitao('CNPJ inválido!', 'error');
+        return;
+    }
+    if (formDataOrganizer.cpf.length < 11) { // Exemplo simples, CPF tem 11 dígitos
+        alertaBonitao('CPF inválido!', 'error');
+        return;
+    }
+
+    // Preparar payload de acordo com o OrganizerRecordDto
+    const payload = {
+      email: formDataOrganizer.email,
+      nome: formDataOrganizer.nome,
+      senha: formDataOrganizer.senha,
+      cnpj: formDataOrganizer.cnpj,
+      cpf: formDataOrganizer.cpf,
+      endereco_empresa: formDataOrganizer.endereco_empresa,
+      nome_empresa: formDataOrganizer.nome_empresa,
+    };
+
+    try {
+      // Endpoint POST para /organizer
+      const response = await axios.post("http://localhost:8080/organizer", payload);
+      console.log("Resposta do servidor:", response);
+
+      alertaBonitao("Organizador criado com sucesso!");
+
+      setTimeout(() => {
+        router.push("/login"); // Redireciona para o login após o cadastro
+      }, 2000);
+    } catch (error) {
+      console.error("Erro ao criar organizador:", error);
+      if (error.response && error.response.data && error.response.data.message) {
+        alertaBonitao(`Erro ao criar organizador: ${error.response.data.message}`, 'error');
+      } else {
+        alertaBonitao("Erro ao criar organizador. Tente novamente.", 'error');
+      }
+    }
+  };
+
+  const inputClasses = "w-full py-2 px-3 mt-1 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-3xl"; // rounded-3xl para arredondamento
+  const labelClasses = "block text-sm font-medium text-gray-700 mb-1"; // Adicionado mb-1 para espaçamento
+
   return (
     <>
       <div className="min-h-screen bg-[url('/page3.png')] bg-cover bg-center flex flex-col">
@@ -34,39 +132,116 @@ export default function CadastroOrg() {
               CADASTRE SUA EMPRESA E COMECE A DIVULGAR
             </h2>
             <hr className="border-t-2 border-gray-300 mb-8" />
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: "Nome da Empresa", type: "text" },
-                { label: "Endereço", type: "text" },
-                { label: "CPF", type: "text" },
-                { label: "CNPJ", type: "text" },
-              ].map((field, idx) => (
-                <div key={idx}>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {field.label}
-                  </label>
-                  <input
-                    type={field.type}
-                    className="w-full py-2 px-3 mt-1 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
-                  />
-                </div>
-              ))}
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
+              {/* Campos do Organizador/Empresa */}
+              <div>
+                <label className={labelClasses}>Nome do Responsável</label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={formDataOrganizer.nome}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Seu nome completo"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Nome da Empresa</label>
+                <input
+                  type="text"
+                  name="nome_empresa"
+                  value={formDataOrganizer.nome_empresa}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Nome da sua empresa"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Endereço da Empresa</label>
+                <input
+                  type="text"
+                  name="endereco_empresa"
+                  value={formDataOrganizer.endereco_empresa}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Endereço completo da empresa"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>CNPJ</label>
+                <input
+                  type="text"
+                  name="cnpj"
+                  value={formDataOrganizer.cnpj}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="XX.XXX.XXX/YYYY-ZZ"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>CPF do Responsável</label>
+                <input
+                  type="text"
+                  name="cpf"
+                  value={formDataOrganizer.cpf}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="000.000.000-00"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>E-mail</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formDataOrganizer.email}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="seu.email@empresa.com"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Senha</label>
+                <input
+                  type="password"
+                  name="senha"
+                  value={formDataOrganizer.senha}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClasses}>Confirme a Senha</label>
+                <input
+                  type="password"
+                  name="confirmarSenha"
+                  value={formDataOrganizer.confirmarSenha}
+                  onChange={handleChange}
+                  className={inputClasses}
+                  placeholder="Confirme sua senha"
+                  required
+                />
+              </div>
 
               <div className="md:col-span-2 flex flex-col items-center gap-3 mt-6">
                 <button
                   type="submit"
-                  className="py-2 px-10 bg-black text-white text-base font-semibold rounded-full hover:bg-gray-900 transition-all"
+                  className="py-3 px-10 bg-black text-white text-lg font-semibold rounded-full hover:bg-gray-900 transition-all shadow-md"
                 >
-                  CRIAR
+                  CRIAR CONTA DE ORGANIZADOR
                 </button>
-
                 <p className="text-sm text-gray-700">
-                  Já possui conta?{' '}
-                  <Link
-                    href="/login"
-                    className="text-[#EE6405] hover:text-[#FFA567] transition-colors underline"
-                  >
-                    Faça login
+                  Já tem uma conta de organizador?{' '}
+                  <Link href="/login" className="text-[#EE6405] hover:text-[#FFA567] transition-colors underline">
+                    Entre aqui
                   </Link>
                 </p>
               </div>
@@ -74,6 +249,7 @@ export default function CadastroOrg() {
           </div>
         </main>
         <Footer />
+        <ToastContainer />
       </div>
     </>
   );
