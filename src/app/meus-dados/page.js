@@ -5,61 +5,92 @@ import Footer from "@/components/Footer/page";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function PerfilUsuario() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     data_nascimento: "",
     telefone: "",
     email: "",
-    tipo: "", // para armazenar o tipo do usuário
+    tipo: "",
   });
 
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+
+  const alertaBonitao = (mensagem) => {
+  toast[mensagem.toLowerCase().includes('sucesso') ? 'success' : 'error'](mensagem, {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    theme: "colored",
+  });
+};
+
   useEffect(() => {
-  if (!session?.user?.id) {
-    router.push("/login");
-    return;
-  }
-
-  const userId = session.user.id;
-  const userType = session.user.tipo;
-
-  const url =
-    userType === "ORGANIZADOR"
-      ? `http://localhost:8080/organizer/${userId}`
-      : `http://localhost:8080/user/${userId}`;
-
-  fetch(url)
-    .then((res) => res.json())
-    .then((data) => {
-      if (userType === "ORGANIZADOR") {
-        setFormData({
-          nome: data.nome || "",
-          data_nascimento: "", // organizador não tem data de nascimento no exemplo
-          telefone: "", // organizador não tem telefone no exemplo
-          email: data.email || "",
-          cpf: data.cpf || "",
-          tipo: userType,
-        });
-      } else {
-        setFormData({
-          nome: data.nome || "",
-          data_nascimento: data.data_nascimento || "",
-          telefone: data.telefone || "",
-          email: data.email || "",
-          tipo: userType,
-        });
-      }
-    })
-    .catch((err) => {
-      console.error("Erro ao buscar dados do usuário:", err);
+    if (!session?.user?.id) {
       router.push("/login");
-    });
-}, [session]);
+      return;
+    }
+
+    const userId = session.user.id;
+    const userType = session.user.tipo;
+
+    const url =
+      userType === "ORGANIZADOR"
+        ? `http://localhost:8080/organizer/${userId}`
+        : `http://localhost:8080/user/${userId}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Dados recebidos:", data)
+        // Formata a data
+        const convertDateToISO = (dateStr) => {
+          if (!dateStr) return "";
+          const parts = dateStr.split("/"); // ["10", "09", "2000"]
+          if (parts.length !== 3) return "";
+          // Retorna no formato ISO: yyyy-mm-dd
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        };
+
+        if (userType === "ORGANIZADOR") {
+          setFormData({
+            nome: data.nome || "",
+            data_nascimento: convertDateToISO(data.data_nascimento),
+            telefone: data.telefone || "",
+            email: data.email || "",
+            cpf: data.cpf || "",
+            tipo: userType,
+          });
+        } else {
+          setFormData({
+            nome: data.nome || "",
+            data_nascimento: convertDateToISO(data.data_nascimento),
+            telefone: data.telefone || "",
+            email: data.email || "",
+            tipo: userType,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar dados do usuário:", err);
+        router.push("/login");
+      });
+  }, [session]);
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({
@@ -68,12 +99,113 @@ export default function PerfilUsuario() {
     }));
   };
 
-  const handleDeleteAccount = (e) => {
+  const handlePasswordChangeInput = (e) => {
+    setPasswordData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // Função para salvar os dados atualizados do usuário
+  const handleSaveInfo = async () => {
+    try {
+      const userId = session.user.id;
+      const userType = session.user.tipo;
+
+      const url =
+        userType === "ORGANIZADOR"
+          ? `http://localhost:8080/organizer/${userId}`
+          : `http://localhost:8080/user/${userId}`;
+
+      const method = "PUT";
+
+      const bodyData = {
+        nome: formData.nome,
+        data_nascimento: formData.data_nascimento,
+        telefone: formData.telefone,
+        email: formData.email,
+      };
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bodyData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao salvar dados");
+      }
+
+      alertaBonitao("Informações atualizadas com sucesso!");
+      setEditMode(false);
+    } catch (error) {
+      alertaBonitao("Erro ao salvar as informações: " + error.message);
+    }
+  };
+
+  // Função para salvar nova senha
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      alertaBonitao("A nova senha e a confirmação não coincidem.");
+      return;
+    }
+    try {
+      const userId = session.user.id;
+
+      const url = `http://localhost:8080/user/${userId}/change-password`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          oldPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao alterar a senha");
+      }
+
+      alertaBonitao("Senha alterada com sucesso!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      setShowChangePassword(false);
+    } catch (error) {
+      alertaBonitao("Erro ao alterar a senha: " + error.message);
+    }
+  };
+
+  const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    console.log("Conta excluída (simulado)");
-    setShowModal(false);
-    // aqui você pode limpar sessão e localStorage conforme necessário
-    router.push("/login");
+    try {
+      const userId = session.user.id;
+      const url =
+        formData.tipo === "ORGANIZADOR"
+          ? `http://localhost:8080/organizer/${userId}`
+          : `http://localhost:8080/user/${userId}`;
+
+      const response = await fetch(url, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao excluir a conta");
+      }
+
+      alertaBonitao("Conta excluída com sucesso.");
+      setShowModal(false);
+      router.push("/login");
+    } catch (error) {
+      alertaBonitao("Erro ao excluir a conta: " + error.message);
+    }
   };
 
   return (
@@ -95,7 +227,17 @@ export default function PerfilUsuario() {
                 INFORMAÇÕES DO USUÁRIO
               </h2>
 
-              <form className="space-y-4">
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editMode) {
+                    handleSaveInfo();
+                  } else {
+                    setEditMode(true);
+                  }
+                }}
+              >
                 <div>
                   <label className="block text-sm font-medium">Nome</label>
                   <input
@@ -143,11 +285,18 @@ export default function PerfilUsuario() {
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-6">
                   <button
-                    type="button"
-                    onClick={() => setEditMode(!editMode)}
+                    type="submit"
                     className="bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 transition"
                   >
                     {editMode ? "Salvar Informações" : "Atualizar Minhas Informações"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePassword(!showChangePassword)}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+                  >
+                    {showChangePassword ? "Cancelar Alteração de Senha" : "Alterar Senha"}
                   </button>
 
                   <button
@@ -159,53 +308,99 @@ export default function PerfilUsuario() {
                   </button>
                 </div>
               </form>
+
+              {showChangePassword && (
+                <div className="mt-6 p-4 border rounded-md bg-gray-50">
+                  <h3 className="text-lg font-semibold mb-4">Alterar Senha</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium">Senha Atual</label>
+                      <input
+                        type="password"
+                        name="currentPassword"
+                        value={passwordData.currentPassword}
+                        onChange={handlePasswordChangeInput}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium">Nova Senha</label>
+                      <input
+                        type="password"
+                        name="newPassword"
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordChangeInput}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium">Confirmar Nova Senha</label>
+                      <input
+                        type="password"
+                        name="confirmNewPassword"
+                        value={passwordData.confirmNewPassword}
+                        onChange={handlePasswordChangeInput}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleChangePassword}
+                        className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
+                      >
+                        Salvar Senha
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
 
-            {/* Exibe o cadastro de organizador só se o tipo for diferente de 'organizador' */}
-<section className="bg-white p-6 rounded-xl shadow-md md:col-span-1 focus:outline-none focus:ring-0">
-  <h2 className="text-lg font-bold border-b-2 border-black pb-1 mb-4 text-center">
-    {formData.tipo === "ORGANIZADOR"
-      ? "JÁ É UM ORGANIZADOR?"
-      : "CADASTRO DE ORGANIZADOR DE EVENTOS"}
-  </h2>
+            <section className="bg-white p-6 rounded-xl shadow-md md:col-span-1 focus:outline-none focus:ring-0">
+              <h2 className="text-lg font-bold border-b-2 border-black pb-1 mb-4 text-center">
+                {formData.tipo === "ORGANIZADOR"
+                  ? "JÁ É UM ORGANIZADOR?"
+                  : "CADASTRO DE ORGANIZADOR DE EVENTOS"}
+              </h2>
 
-  {formData.tipo === "ORGANIZADOR" ? (
-    <>
-      <p className="text-sm text-gray-700 mb-4 text-center">
-        Visualize e edite seus eventos no botão abaixo.
-      </p>
-      <div className="flex justify-center">
-        <button
-          onClick={() => router.push("/meus-eventos")}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-        >
-          Visualizar / Editar Eventos
-        </button>
-      </div>
-    </>
-  ) : (
-    <>
-      <p className="text-sm text-gray-700 mb-4 text-center">
-        Quer divulgar seu estabelecimento ou evento? <br />
-        Faça o cadastro de Organizador de Eventos para iniciar.
-      </p>
-      <div className="flex justify-center">
-        <a
-          href="/register-company"
-          className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition"
-        >
-          IR PARA CADASTRO
-        </a>
-      </div>
-    </>
-  )}
-</section>
+              {formData.tipo === "ORGANIZADOR" ? (
+                <>
+                  <p className="text-sm text-gray-700 mb-4 text-center">
+                    Visualize e edite seus eventos no botão abaixo.
+                  </p>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => router.push("/meus-eventos")}
+                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+                    >
+                      Visualizar / Editar Eventos
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-700 mb-4 text-center">
+                    Quer divulgar seu estabelecimento ou evento? <br />
+                    Faça o cadastro de Organizador de Eventos para iniciar.
+                  </p>
+                  <div className="flex justify-center">
+                    <a
+                      href="/register-company"
+                      className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition"
+                    >
+                      IR PARA CADASTRO
+                    </a>
+                  </div>
+                </>
+              )}
+            </section>
           </div>
         </main>
         <Footer />
+        <ToastContainer />
       </div>
 
-      {/* Modal de confirmação */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -213,24 +408,30 @@ export default function PerfilUsuario() {
             <p className="mb-2 text-sm text-gray-700">
               Digite sua senha para confirmar a exclusão da conta. Esta ação é irreversível.
             </p>
-            <input
-              type="password"
-              className="w-full p-2 border border-gray-300 rounded-md mb-4"
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Confirmar Exclusão
-              </button>
-            </div>
+
+            <form onSubmit={handleDeleteAccount}>
+              <input
+                type="password"
+                placeholder="Senha"
+                className="w-full p-2 border border-gray-300 rounded-md mb-4"
+                required
+              />
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                >
+                  Excluir Conta
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

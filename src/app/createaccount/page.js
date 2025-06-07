@@ -10,82 +10,97 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function CadastroOrg() {
+    const formatDateToBR = (isoDate) => {
+        if (!isoDate) return "";
+        const date = new Date(isoDate + "T00:00:00"); // Evita problemas de fuso
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Mês começa em 0
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
     const [formData, setFormData] = useState({
         nome: "",
         email: "",
         senha: "",
         confirmarSenha: "",
         telefone: "",
-        data_nascimento:""
-        
-      });
-      const router = useRouter();
+        data_nascimento: ""
 
-      const alertaBonitao = (mensagem, tipo) => {
+    });
+    const router = useRouter();
+
+    const alertaBonitao = (mensagem, tipo) => {
         toast[mensagem.includes('sucesso') ? 'success' : 'error'](mensagem, {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "colored",
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "colored",
         });
-      };
+    };
 
-      const handleChange = (e) => {
+    const handleChange = (e) => {
         const { name, value } = e.target;
-          setFormData({
+        setFormData({
             ...formData,
-            [name]: value ,
-          });
-      };
+            [name]: value,
+        });
+    };
 
-      const handleSubmit = async (e) => {
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         console.log("Form data:", formData);  // Para depurar se os dados estão sendo capturados corretamente
-    
+
         // Validação dos campos
         if (!formData.nome || !formData.email || !formData.senha || !formData.telefone || !formData.data_nascimento || !formData.confirmarSenha) {
             alertaBonitao('Por favor, preencha todos os campos!', 'error');
             return;
         }
-    
+
         // Validação de e-mail
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         if (!emailRegex.test(formData.email)) {
             alertaBonitao('Por favor, insira um e-mail válido!', 'error');
             return;
         }
-    
+
         // Validação de telefone
-        const telefoneRegex = /^\(\d{2}\) \d{9}$/; // (XX) XXXXX-XXXX
+        const telefoneRegex = /^\d{11}$/; // (XX) XXXXX-XXXX
         if (!telefoneRegex.test(formData.telefone)) {
             alertaBonitao('Por favor, insira um telefone válido!', 'error');
             return;
         }
-    
+
         // Validação de senha
         if (formData.senha.length < 6) {
             alertaBonitao('A senha deve ter pelo menos 6 caracteres!', 'error');
             return;
         }
-    
+
         // Validação de senha de confirmação
         if (formData.senha !== formData.confirmarSenha) {
             alertaBonitao('As senhas não coincidem!', 'error');
             return;
         }
-    
+
+        const dadosParaEnviar = {
+            ...formData,
+            data_nascimento: formatDateToBR(formData.data_nascimento),
+        };
+
         // Se todas as validações passarem, envia os dados
         try {
             // Enviando dados para o servidor
-            const response = await axios.post("http://localhost:8080/user", formData);
+            const response = await axios.post("http://localhost:8080/user", dadosParaEnviar);
             console.log("Resposta do servidor:", response);  // Para verificar a resposta do servidor
-    
+
             // Exibindo alerta de sucesso
             alertaBonitao("Usuário criado com sucesso!");
-    
+
             // Redirecionando para a página de login
             setTimeout(() => {
                 router.push("/login");
@@ -110,68 +125,68 @@ export default function CadastroOrg() {
                         <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Nome</label>
-                                <input 
-                                name="nome"
-                                type="text" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="Nome Completo"
-                                value={formData.nome}
-                                onChange={handleChange}
+                                <input
+                                    name="nome"
+                                    type="text"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="Nome Completo"
+                                    value={formData.nome}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Telefone</label>
-                                <input 
-                                name="telefone"
-                                type="text" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="(00) 000000000" 
-                                value={formData.telefone}
-                                onChange={handleChange}
+                                <input
+                                    name="telefone"
+                                    type="text"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="(00) 000000000"
+                                    value={formData.telefone}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Data de Nascimento</label>
-                                <input 
-                                name="data_nascimento"
-                                type="text" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="DD/MM/AAAA" 
-                                value={formData.data_nascimento}
-                                onChange={handleChange}
+                                <input
+                                    name="data_nascimento"
+                                    type="date"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="DD/MM/AAAA"
+                                    value={formData.data_nascimento}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">E-mail</label>
-                                <input 
-                                name="email"
-                                type="email" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="Insira um e-mail"
-                                value={formData.email}
-                                onChange={handleChange}
+                                <input
+                                    name="email"
+                                    type="email"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="Insira um e-mail"
+                                    value={formData.email}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Senha</label>
                                 <input
-                                name="senha" 
-                                type="password" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="Insira uma senha"
-                                value={formData.senha}
-                                onChange={handleChange}
+                                    name="senha"
+                                    type="password"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="Insira uma senha"
+                                    value={formData.senha}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Confirme a Senha</label>
                                 <input
-                                name="confirmarSenha"
-                                type="password" 
-                                className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md" 
-                                placeholder="Confirme sua senha"
-                                value={formData.confirmarSenha}
-                                onChange={handleChange}
+                                    name="confirmarSenha"
+                                    type="password"
+                                    className="w-full p-2 mt-2 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-md"
+                                    placeholder="Confirme sua senha"
+                                    value={formData.confirmarSenha}
+                                    onChange={handleChange}
                                 />
                             </div>
                             <div className="md:col-span-2 flex flex-col items-center gap-4 mt-6">

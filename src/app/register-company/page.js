@@ -8,9 +8,11 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import InputMask from 'react-input-mask-next';
 
 export default function CadastroOrg() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Renomeado para formDataOrganizer para clareza
   const [formDataOrganizer, setFormDataOrganizer] = useState({
@@ -36,21 +38,49 @@ export default function CadastroOrg() {
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormDataOrganizer({
-      ...formDataOrganizer,
-      [name]: value,
-    });
+
+  const formatCPF = (value) => {
+    return value
+      .replace(/\D/g, '') // Remove tudo que não for dígito
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   };
+
+  const formatCNPJ = (value) => {
+  return value
+    .replace(/\D/g, '') // Remove tudo que não for dígito
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+    .slice(0, 18); // Garante que não passa do tamanho
+};
+
+
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  let formattedValue = value;
+  if (name === "cpf") {
+    formattedValue = formatCPF(value);
+  } else if (name === "cnpj") {
+    formattedValue = formatCNPJ(value);
+  }
+
+  setFormDataOrganizer({
+    ...formDataOrganizer,
+    [name]: formattedValue,
+  });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form data for Organizer:", formDataOrganizer);
-
+    setIsLoading(true);
     // Validação dos campos
     const requiredFields = [
-      'nome', 'email', 'senha', 'confirmarSenha', 
+      'nome', 'email', 'senha', 'confirmarSenha',
       'cnpj', 'cpf', 'endereco_empresa', 'nome_empresa'
     ];
     for (const field of requiredFields) {
@@ -76,15 +106,15 @@ export default function CadastroOrg() {
       alertaBonitao('As senhas não coincidem!', 'error');
       return;
     }
-    
+
     // Validação de CNPJ e CPF (pode ser mais robusta, mas aqui é um exemplo simples)
     if (formDataOrganizer.cnpj.length < 14) { // Exemplo simples, CNPJ tem 14 dígitos
-        alertaBonitao('CNPJ inválido!', 'error');
-        return;
+      alertaBonitao('CNPJ inválido!', 'error');
+      return;
     }
     if (formDataOrganizer.cpf.length < 11) { // Exemplo simples, CPF tem 11 dígitos
-        alertaBonitao('CPF inválido!', 'error');
-        return;
+      alertaBonitao('CPF inválido!', 'error');
+      return;
     }
 
     // Preparar payload de acordo com o OrganizerRecordDto
@@ -116,6 +146,7 @@ export default function CadastroOrg() {
         alertaBonitao("Erro ao criar organizador. Tente novamente.", 'error');
       }
     }
+    setIsLoading(false);
   };
 
   const inputClasses = "w-full py-2 px-3 mt-1 text-black bg-white border border-black focus:outline-none focus:ring-1 focus:ring-black rounded-3xl"; // rounded-3xl para arredondamento
@@ -184,13 +215,15 @@ export default function CadastroOrg() {
               </div>
               <div>
                 <label className={labelClasses}>CPF do Responsável</label>
+
+
                 <input
                   type="text"
                   name="cpf"
                   value={formDataOrganizer.cpf}
                   onChange={handleChange}
                   className={inputClasses}
-                  placeholder="000.000.000-00"
+                  placeholder="Digite o CPF do responsável"
                   required
                 />
               </div>
@@ -234,9 +267,10 @@ export default function CadastroOrg() {
               <div className="md:col-span-2 flex flex-col items-center gap-3 mt-6">
                 <button
                   type="submit"
-                  className="py-3 px-10 bg-black text-white text-lg font-semibold rounded-full hover:bg-gray-900 transition-all shadow-md"
+                  disabled={isLoading}
+                  className={`py-3 px-10 bg-black text-white ... ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900'}`}
                 >
-                  CRIAR CONTA DE ORGANIZADOR
+                  {isLoading ? 'Cadastrando...' : 'CRIAR CONTA DE ORGANIZADOR'}
                 </button>
                 <p className="text-sm text-gray-700">
                   Já tem uma conta de organizador?{' '}

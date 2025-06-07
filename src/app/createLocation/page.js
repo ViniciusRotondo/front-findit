@@ -52,42 +52,23 @@ export default function CreateLocation() {
     fetchStates();
   }, []);
 
-  // Pega as cidades quando o estado mudar
   useEffect(() => {
-    if (!form.estado_id) {
-      setCities([]);
-      // Resetar a cidade selecionada se o estado mudar
-      setForm(prev => ({ ...prev, cidade_id: '' }));
-      return;
-    }
-    async function fetchCities() {
+  async function fetchCities() {
+    try {
       setLoadingCities(true);
-      try {
-        // CORREÇÃO: A URL para buscar cidades precisa ser por estado_id,
-        // conforme discutimos anteriormente para o filtro de cidades.
-        // Se a sua API de cidades já filtra por estado_id quando recebe a sigla na URL, use essa.
-        // Exemplo: 'http://localhost:8080/city/state/${form.estado_id}'
-        // Se sua API de cidades não filtra por estado na URL, então você precisaria de um endpoint diferente
-        // ou filtrar no frontend (não recomendado para grandes volumes de dados).
-        // VOU MANTER A URL DE TESTE DA SUA API, mas é um ponto de atenção.
-        const res = await fetch(`http://localhost:8080/city`); // << AQUI: Verifique se sua API filtra cidades por estado_id
-        if (!res.ok) throw new Error('Falha ao buscar cidades');
-        const allCities = await res.json();
-
-        // Filtra as cidades pelo estado_id no frontend (se a API não o fizer)
-        // Se a sua API já filtra por estado_id no endpoint `city/state/{id}`, você pode remover este .filter
-        const filteredCities = allCities.filter(city => city.estado?.sigla === form.estado_id); 
-        setCities(filteredCities);
-
-      } catch (error) {
-        console.error("Erro ao buscar cidades:", error);
-        setCities([]);
-      } finally {
-        setLoadingCities(false);
-      }
+      const res = await fetch('http://localhost:8080/city'); // seu endpoint para cidades
+      if (!res.ok) throw new Error('Falha ao buscar cidades');
+      const data = await res.json();
+      setCities(data);
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+    } finally {
+      setLoadingCities(false);
     }
-    fetchCities();
-  }, [form.estado_id]); // Dependência: só executa quando estado_id muda
+  }
+  fetchCities();
+}, []);
+
 
   // Manipula mudanças no formulário para inputs normais
   function handleChange(e) {
@@ -113,8 +94,6 @@ export default function CreateLocation() {
       capacidade_de_pessoas: Number(form.capacidade_de_pessoas),
       url_mapa: form.url_mapa,
       telefone: form.telefone,
-      // Verifique se o backend espera o ID do estado ou a sigla.
-      // Se espera o ID do objeto Estado, precisará mapear sigla para ID aqui.
       estado_id: form.estado_id, 
       cidade_id: form.cidade_id,
       pais_id: 'BR' 
@@ -161,18 +140,15 @@ export default function CreateLocation() {
     <>
       <Header />
       
-      {/* Container principal com o background da página */}
       <div 
         className="flex-grow bg-cover bg-center font-lato text-black py-10"
         style={{ backgroundImage: "url('/page1.png')" }}
       >
-        {/* Quadro branco do formulário */}
         <div className="mx-auto max-w-4xl w-full px-4 py-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
           <h1 className="text-3xl font-extrabold text-black mb-4 font-lato text-center">CADASTRO DE NOVO LOCAL</h1>
           <hr className="border-black mb-8 border-t-2 w-full" />
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-            {/* Coluna Esquerda */}
             <div className="space-y-6">
               <div>
                 <label htmlFor="nome" className={labelClasses}>Nome do Local</label>
@@ -243,15 +219,15 @@ export default function CreateLocation() {
                 />
               </div>
 
-              {/* Drilldown de Estado Estilizado */}
+              
               <div 
                 className="relative z-10"
-                onMouseLeave={() => setShowStateDropdown(false)} // Fecha ao tirar o mouse
+                onMouseLeave={() => setShowStateDropdown(false)}
               >
                 <label htmlFor="estado_id" className={labelClasses}>Estado</label>
                 <button
                   type="button"
-                  onClick={() => setShowStateDropdown(!showStateDropdown)} // Permite clique também
+                  onClick={() => setShowStateDropdown(!showStateDropdown)} 
                   className={selectButtonClasses}
                   required 
                 >
