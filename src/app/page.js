@@ -130,7 +130,7 @@ export default function Home() {
                                 </div>
                             ))}
                             {/* Botão "MOSTRAR MAIS EVENTOS" com o estilo do botão RESTAURANTES */}
-                            <button className="bg-[#FFA567] px-16 py-4 rounded-l-full rounded-br-full text-black text-xl font-extrabold m-2 hover:bg-[#EE6405] hover:transition-all duration-1000 ease-in-out">
+                            <button onClick={() => router.push("/eventos")} className="bg-[#FFA567] px-16 py-4 rounded-l-full rounded-br-full text-black text-xl font-extrabold m-2 hover:bg-[#EE6405] hover:transition-all duration-1000 ease-in-out">
                                 MOSTRAR MAIS EVENTOS
                             </button>
                         </div>

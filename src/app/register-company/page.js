@@ -268,7 +268,7 @@ const handleChange = (e) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`py-3 px-10 bg-black text-white ... ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900'}`}
+                  className={`rounded-3xl py-3 px-10 bg-black text-white ... ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900'}`}
                 >
                   {isLoading ? 'Cadastrando...' : 'CRIAR CONTA DE ORGANIZADOR'}
                 </button>

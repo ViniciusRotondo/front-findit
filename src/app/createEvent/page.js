@@ -173,13 +173,12 @@ export default function CreateEvent() {
 
                {/* Dropdown de Status estilizado */}
                <div 
-                 className="relative z-10"
-                 onMouseLeave={() => setShowStatusDropdown(false)} // Adicionado para fechar ao sair do mouse
+                 className="relative z-10" // Este já tinha z-10 e funciona
                >
                 <label htmlFor="status" className={labelClasses}>Status</label>
                 <button
                   type="button"
-                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)} // Clique para alternar
                   className={selectButtonClasses}
                 >
                   {formData.status}
@@ -263,8 +262,8 @@ export default function CreateEvent() {
 
               {/* Drilldown de Local Estilizado e Botão "Cadastrar Local" ao lado */}
               <div 
-                className="relative z-0"
-                onMouseLeave={() => setShowLocalDropdown(false)} // Adicionado para fechar ao sair do mouse
+                className="relative z-10" // AUMENTADO O Z-INDEX PARA 10 AQUI
+                // onMouseLeave removido
               >
                 <label htmlFor="local_id" className={labelClasses}>Local</label>
                 <div className="flex items-center gap-2"> {/* Flex container para o select e o botão */}
@@ -286,7 +285,7 @@ export default function CreateEvent() {
                     </button>
                 </div>
                 {showLocalDropdown && (
-                  <div className="absolute w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                  <div className="relative w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                     <ul className="py-1">
                       {locais.map(local => (
                         <li key={local.idLocal}>
@@ -306,8 +305,8 @@ export default function CreateEvent() {
 
               {/* Drilldown de Categoria Estilizado (sem botão ao lado) */}
               <div 
-                className="relative z-0"
-                onMouseLeave={() => setShowCategoryDropdown(false)} // Adicionado para fechar ao sair do mouse
+                className="relative z-10" // AUMENTADO O Z-INDEX PARA 10 AQUI TAMBÉM
+                // onMouseLeave removido
               >
                 <label htmlFor="categoria_id" className={labelClasses}>Categoria</label>
                 <button
