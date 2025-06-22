@@ -133,7 +133,7 @@ const handleChange = (e) => {
       const response = await axios.post("http://localhost:8080/organizer", payload);
       console.log("Resposta do servidor:", response);
 
-      alertaBonitao("Organizador criado com sucesso!");
+      alertaBonitao("Organizador criado com sucesso!", "success");
 
       setTimeout(() => {
         router.push("/login"); // Redireciona para o login após o cadastro

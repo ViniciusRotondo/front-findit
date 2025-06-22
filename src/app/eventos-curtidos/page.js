@@ -7,27 +7,18 @@ import { FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Ícone
 import Header from '@/components/Header/page';
 import Footer from '@/components/Footer/page';
 import Image from 'next/image';
+import axios from 'axios';
 
-/**
- * Função mock para simular a busca de eventos curtidos.
- * No futuro, esta função fará uma chamada API para o backend,
- * buscando eventos curtidos pelo ID do usuário.
- */
-const fetchLikedEventsMock = async (userId) => {
-  return new Promise(resolve => {
-    // Simulação: Retorna uma lista vazia por enquanto
-    // Em uma implementação real, seria uma chamada axios.get(`/api/users/${userId}/liked-events`)
-    setTimeout(() => {
-      resolve([]); // Retorna array vazio por padrão
-    }, 500); 
-  });
-};
+
+
 
 export default function EventosCurtidos() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchInputRef = useRef(null);
-  
+
+
+
   // ───────────────────────── Estado / UI ─────────────────────────
   const [eventosCurtidos, setEventosCurtidos] = useState([]); // Eventos curtidos pelo usuário
   const [eventosFiltrados, setEventosFiltrados] = useState([]); // Eventos curtidos filtrados
@@ -50,25 +41,32 @@ export default function EventosCurtidos() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
-  // ───────────────────────── Autenticação e Carregamento dos eventos ─────────────────────────
+  // ───────────────────────── Autenticação e Carregamento dos eventos ────────────────────────
+  const fetchLikedEvents = async (userId) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/user/${userId}/curtidos`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar eventos curtidos:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
-    // Redireciona se não autenticado
     if (status === 'unauthenticated') {
       router.replace('/login');
       return;
-    } 
-    // Carrega eventos curtidos somente se autenticado
+    }
+
     if (status === 'authenticated' && session?.user?.id) {
       const carregarEventos = async () => {
-        // No futuro, aqui você fará a chamada real à API
-        const data = await fetchLikedEventsMock(session.user.id); 
+        const data = await fetchLikedEvents(session.user.id);
         setEventosCurtidos(data);
-        setEventosFiltrados(data); // Inicializa com todos os eventos curtidos
+        setEventosFiltrados(data);
       };
       carregarEventos();
     }
-  }, [status, session, router]); // Dependências: status da sessão, objeto session e router
-
+  }, [status, session, router]);
   // ───────────────────────── Dados derivados (memo) ─────────────────────────
   const locaisUnicos = useMemo(
     () => Array.from(new Set(eventosCurtidos.map((e) => e.local?.nome).filter(Boolean))),
@@ -86,10 +84,10 @@ export default function EventosCurtidos() {
       const nomeMatch = evento.nome_do_evento.toLowerCase().includes(buscaNomeAplicada.toLowerCase());
       const localMatch = filtroLocalAplicado ? evento.local?.nome === filtroLocalAplicado : true;
       const categoriaMatch = filtroCategoriaAplicada ? evento.categoria === filtroCategoriaAplicada : true;
-      
+
       const dataEvento = new Date(evento.data_hora);
       const dataFiltro = filtroDataAplicada ? new Date(filtroDataAplicada) : null;
-      const dataMatch = dataFiltro ? 
+      const dataMatch = dataFiltro ?
         dataEvento.getFullYear() === dataFiltro.getFullYear() &&
         dataEvento.getMonth() === dataFiltro.getMonth() &&
         dataEvento.getDate() === dataFiltro.getDate()
@@ -123,13 +121,13 @@ export default function EventosCurtidos() {
 
   // ───────────────────────── Handlers de Ações ─────────────────────────
   const handleView = (id) => router.push(`/event/${id}`);
-  
+
   // ───────────────────────── Render ─────────────────────────
   if (status === 'loading') {
     return <div className="min-h-screen flex items-center justify-center text-xl font-medium text-[#EE6405]">Carregando...</div>;
   }
   // Se não for autenticado, já redirecionou acima.
-  
+
   return (
     <div className="min-h-screen bg-cover bg-center font-lato" style={{ backgroundImage: "url('/page1.png')" }}>
       <Header />
@@ -163,18 +161,18 @@ export default function EventosCurtidos() {
 
       {/* Dropdown de Filtros (Local, Categoria, Data) */}
       {showFiltersDropdown && (
-        <div 
+        <div
           className="w-full bg-white/90 backdrop-blur-sm shadow-lg py-4 flex flex-wrap justify-center gap-6 z-10 border-b border-gray-200"
-          onMouseLeave={() => { 
+          onMouseLeave={() => {
             setShowFiltersDropdown(false);
             setShowLocalDropdown(false);
             setShowCategoryDropdown(false);
             setShowDateDropdown(false);
           }}
         >
-          
+
           {/* Filtro de Locais Estilizado */}
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setShowLocalDropdown(true)}
             onMouseLeave={() => setShowLocalDropdown(false)}
@@ -215,7 +213,7 @@ export default function EventosCurtidos() {
           </div>
 
           {/* Filtro de Categorias Estilizado */}
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setShowCategoryDropdown(true)}
             onMouseLeave={() => setShowCategoryDropdown(false)}
@@ -270,23 +268,23 @@ export default function EventosCurtidos() {
       {/* Conteúdo principal (Eventos Curtidos) */}
       <main className="flex-grow p-10 flex flex-col items-center">
         <h1 className="font-lato text-black font-bold text-3xl w-full text-center mb-8">EVENTOS CURTIDOS</h1>
-        
-        <div className="flex flex-wrap justify-center gap-12 pt-8 max-w-5xl mx-auto">
+
+        <div className="flex flex-wrap justify-center gap-12 pt-8 max-w-5xl mx-auto ">
           {eventosFiltrados.length === 0 ? (
             <p className="text-xl font-medium text-gray-700">Nenhum evento curtido encontrado com os filtros aplicados.</p>
           ) : (
             eventosFiltrados.map((ev) => (
-              <div key={ev.idEvento} className="w-64 bg-white shadow-md rounded-b-md mb-4 text-left relative overflow-hidden group">
+              <div key={ev.idEvento} className="w-64 bg-white shadow-md rounded-b-md mb-4 text-left relative overflow-hidden group hover:translate-y-1 transition-transform cursor-pointer">
                 {/* Imagem do Evento */}
-                <div 
-                  className="w-full h-48 cursor-pointer relative" 
+                <div
+                  className="w-full h-48 cursor-pointer relative"
                   onClick={() => handleView(ev.idEvento)}
                 >
-                  <Image 
-                    src={`/${ev.url_imagem}.jpg`} 
-                    alt={ev.nome_do_evento} 
-                    layout="fill" 
-                    objectFit="cover" 
+                  <Image
+                    src={`/${ev.url_imagem}.jpg`}
+                    alt={ev.nome_do_evento}
+                    layout="fill"
+                    objectFit="cover"
                     className="rounded-t-md"
                     priority
                   />
@@ -301,7 +299,9 @@ export default function EventosCurtidos() {
                     {ev.local?.nome ?? 'Local não informado'} - {new Date(ev.data_hora).toLocaleDateString('pt-BR')}
                   </p>
                   <p className="font-lato font-extrabold text-black">
-                    R$ {ev.preco ? ev.preco.toFixed(2).replace('.', ',') : '0,00'}
+                    {ev.preco === 0 || !ev.preco
+                      ? 'Grátis'
+                      : `R$ ${ev.preco.toFixed(2).replace('.', ',')}`}
                   </p>
                 </div>
 

@@ -28,17 +28,30 @@ export default function PerfilUsuario() {
     confirmNewPassword: "",
   });
 
+  // Para guardar a senha digitada no modal de exclusão
+  const [deletePassword, setDeletePassword] = useState("");
+
   const alertaBonitao = (mensagem) => {
-  toast[mensagem.toLowerCase().includes('sucesso') ? 'success' : 'error'](mensagem, {
-    position: "top-center",
-    autoClose: 3000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    theme: "colored",
-  });
-};
+    toast[mensagem.toLowerCase().includes('sucesso') ? 'success' : 'error'](mensagem, {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+  };
+
+  // Função para pegar URL base conforme tipo do usuário
+  const getUserBaseUrl = () => {
+    const userId = session?.user?.id;
+    const userType = session?.user?.tipo;
+    if (!userId || !userType) return null;
+    return userType === "ORGANIZADOR"
+      ? `http://localhost:8080/organizer/${userId}`
+      : `http://localhost:8080/user/${userId}`;
+  };
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -46,26 +59,24 @@ export default function PerfilUsuario() {
       return;
     }
 
-    const userId = session.user.id;
-    const userType = session.user.tipo;
-
-    const url =
-      userType === "ORGANIZADOR"
-        ? `http://localhost:8080/organizer/${userId}`
-        : `http://localhost:8080/user/${userId}`;
+    const url = getUserBaseUrl();
+    if (!url) return;
 
     fetch(url)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Erro ao buscar dados");
+        return res.json();
+      })
       .then((data) => {
-        console.log("Dados recebidos:", data)
-        // Formata a data
+        // Formata a data dd/MM/yyyy para yyyy-MM-dd
         const convertDateToISO = (dateStr) => {
           if (!dateStr) return "";
           const parts = dateStr.split("/"); // ["10", "09", "2000"]
           if (parts.length !== 3) return "";
-          // Retorna no formato ISO: yyyy-mm-dd
           return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         };
+
+        const userType = session.user.tipo;
 
         if (userType === "ORGANIZADOR") {
           setFormData({
@@ -90,7 +101,7 @@ export default function PerfilUsuario() {
         console.error("Erro ao buscar dados do usuário:", err);
         router.push("/login");
       });
-  }, [session]);
+  }, [session, router]);
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({
@@ -106,18 +117,11 @@ export default function PerfilUsuario() {
     }));
   };
 
-  // Função para salvar os dados atualizados do usuário
+  // Salvar dados do usuário
   const handleSaveInfo = async () => {
     try {
-      const userId = session.user.id;
-      const userType = session.user.tipo;
-
-      const url =
-        userType === "ORGANIZADOR"
-          ? `http://localhost:8080/organizer/${userId}`
-          : `http://localhost:8080/user/${userId}`;
-
-      const method = "PUT";
+      const url = getUserBaseUrl();
+      if (!url) throw new Error("Usuário não autenticado");
 
       const bodyData = {
         nome: formData.nome,
@@ -127,16 +131,12 @@ export default function PerfilUsuario() {
       };
 
       const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData),
       });
 
-      if (!response.ok) {
-        throw new Error("Erro ao salvar dados");
-      }
+      if (!response.ok) throw new Error("Erro ao salvar dados");
 
       alertaBonitao("Informações atualizadas com sucesso!");
       setEditMode(false);
@@ -145,7 +145,7 @@ export default function PerfilUsuario() {
     }
   };
 
-  // Função para salvar nova senha
+  // Alterar senha
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmNewPassword) {
       alertaBonitao("A nova senha e a confirmação não coincidem.");
@@ -153,8 +153,13 @@ export default function PerfilUsuario() {
     }
     try {
       const userId = session.user.id;
+      const userType = session.user.tipo;
 
-      const url = `http://localhost:8080/user/${userId}/change-password`;
+      const baseUrl = userType === "ORGANIZADOR"
+        ? `http://localhost:8080/organizer/${userId}`
+        : `http://localhost:8080/user/${userId}`;
+
+      const url = `${baseUrl}/change-password`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -183,17 +188,29 @@ export default function PerfilUsuario() {
     }
   };
 
+  // Excluir conta - envia senha para confirmação no backend (se necessário)
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
+    if (!deletePassword) {
+      alertaBonitao("Por favor, digite sua senha para confirmar.");
+      return;
+    }
+
     try {
       const userId = session.user.id;
-      const url =
-        formData.tipo === "ORGANIZADOR"
-          ? `http://localhost:8080/organizer/${userId}`
-          : `http://localhost:8080/user/${userId}`;
+      const userType = session.user.tipo;
 
-      const response = await fetch(url, {
+      const baseUrl = userType === "ORGANIZADOR"
+        ? `http://localhost:8080/organizer/${userId}`
+        : `http://localhost:8080/user/${userId}`;
+
+      // Ajuste aqui se seu backend aceitar senha via body para confirmação de exclusão
+      const response = await fetch(baseUrl, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: deletePassword }),
       });
 
       if (!response.ok) {
@@ -260,17 +277,20 @@ export default function PerfilUsuario() {
                     className="w-full mt-1 p-2 border border-gray-300 rounded-md bg-white"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium">Telefone</label>
-                  <input
-                    type="tel"
-                    name="telefone"
-                    value={formData.telefone}
-                    onChange={handleInputChange}
-                    readOnly={!editMode}
-                    className="w-full mt-1 p-2 border border-gray-300 rounded-md bg-white"
-                  />
-                </div>
+
+                {formData.tipo === "USUARIO" && (
+                  <div>
+                    <label className="block text-sm font-medium">Telefone</label>
+                    <input
+                      type="tel"
+                      name="telefone"
+                      value={formData.telefone}
+                      onChange={handleInputChange}
+                      readOnly={!editMode}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md bg-white"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium">Email</label>
                   <input
@@ -415,6 +435,8 @@ export default function PerfilUsuario() {
                 placeholder="Senha"
                 className="w-full p-2 border border-gray-300 rounded-md mb-4"
                 required
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
               />
               <div className="flex justify-end gap-4">
                 <button

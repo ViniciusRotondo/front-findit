@@ -12,9 +12,9 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function CadastroOrg() {
     const formatDateToBR = (isoDate) => {
         if (!isoDate) return "";
-        const date = new Date(isoDate + "T00:00:00"); // Evita problemas de fuso
+        const date = new Date(isoDate + "T00:00:00");
         const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Mês começa em 0
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
@@ -99,15 +99,19 @@ export default function CadastroOrg() {
             console.log("Resposta do servidor:", response);  // Para verificar a resposta do servidor
 
             // Exibindo alerta de sucesso
-            alertaBonitao("Usuário criado com sucesso!");
+            alertaBonitao("Usuário criado com sucesso!", "success");
 
             // Redirecionando para a página de login
             setTimeout(() => {
                 router.push("/login");
             }, 2000); // Espera 2 segundos antes de redirecionar
         } catch (error) {
-            console.error("Erro ao criar usuário:", error);
-            alertaBonitao("Erro ao criar usuário.", 'error');
+            console.warn("Erro ao criar usuário:", error.response?.data?.message || error.message);
+            if (error.response && error.response.data && error.response.data.message) {
+                alertaBonitao(`Erro ao criar usuario: ${error.response.data.message}`, 'error');
+            } else {
+                alertaBonitao("Erro ao criar usuario. Tente novamente.", 'error');
+            }
         }
     };
 

@@ -29,23 +29,37 @@ export default function RecuperarSenha() {
       return;
     }
 
-    try {
-      const res = await fetch("http://localhost:8080/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    const urls = [
+      "http://localhost:8080/user/reset-password",
+      "http://localhost:8080/organizer/reset-password"
+    ];
 
-      const text = await res.text();
-      if (res.ok) {
-        alertaBonitao(text, "success");
-        setEmail(""); // limpa o campo após envio bem-sucedido
-      } else {
-        alertaBonitao("Erro: " + text, "error");
+    let response;
+    let responseText;
+
+    for (const url of urls) {
+      try {
+        response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        responseText = await response.text();
+
+        if (response.ok) {
+          alertaBonitao(responseText, "success");
+          setEmail(""); // limpa campo após sucesso
+          return;
+        }
+        // Se não ok, tenta próxima URL
+      } catch (error) {
+        // Erro de rede ou outro, tenta próxima URL
+        continue;
       }
-    } catch (err) {
-      alertaBonitao("Erro ao tentar redefinir a senha.", "error");
     }
+
+    alertaBonitao("E-mail não encontrado em nenhum cadastro.", "error");
   };
 
   return (

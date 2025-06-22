@@ -6,11 +6,25 @@ import { useSession } from "next-auth/react";
 import axios from "axios";
 import Header from "@/components/Header/page";
 import Footer from "@/components/Footer/page";
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Para os ícones de dropdown
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function CreateEvent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const alertaBonitao = (mensagem, tipo) => {
+    toast[tipo === 'success' ? 'success' : 'error'](mensagem, {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -87,11 +101,15 @@ export default function CreateEvent() {
     e.preventDefault();
     try {
       await axios.post("http://localhost:8080/event", formData);
-      alert("Evento criado com sucesso!");
-      router.push("/eventos"); // Redireciona para a lista de eventos
+      alertaBonitao("Evento criado com sucesso!", "success");
+
+      setTimeout(() => {
+        router.push("/meus-eventos");
+      }, 3000);
+
     } catch (error) {
       console.error("Erro ao criar evento:", error);
-      alert("Erro ao criar evento.");
+      alertaBonitao("Erro ao criar evento.", "error");
     }
   };
 
@@ -105,9 +123,9 @@ export default function CreateEvent() {
   return (
     <>
       <Header />
-      
+
       {/* Container principal com o background da página */}
-      <div 
+      <div
         className="flex-grow bg-cover bg-center font-lato text-black py-10"
         style={{ backgroundImage: "url('/page1.png')" }}
       >
@@ -171,14 +189,15 @@ export default function CreateEvent() {
                 />
               </div>
 
-               {/* Dropdown de Status estilizado */}
-               <div 
-                 className="relative z-10" // Este já tinha z-10 e funciona
-               >
+              {/* Dropdown de Status estilizado */}
+              <div
+                className="relative z-10"
+
+              >
                 <label htmlFor="status" className={labelClasses}>Status</label>
                 <button
                   type="button"
-                  onClick={() => setShowStatusDropdown(!showStatusDropdown)} // Clique para alternar
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
                   className={selectButtonClasses}
                 >
                   {formData.status}
@@ -261,28 +280,28 @@ export default function CreateEvent() {
               </div>
 
               {/* Drilldown de Local Estilizado e Botão "Cadastrar Local" ao lado */}
-              <div 
-                className="relative z-10" // AUMENTADO O Z-INDEX PARA 10 AQUI
-                // onMouseLeave removido
+              <div
+                className="relative z-10"
+
               >
                 <label htmlFor="local_id" className={labelClasses}>Local</label>
-                <div className="flex items-center gap-2"> {/* Flex container para o select e o botão */}
-                    <button
-                        type="button"
-                        onClick={() => setShowLocalDropdown(!showLocalDropdown)}
-                        className={`${selectButtonClasses} flex-grow`}
-                    >
-                        {locais.find(l => l.idLocal === formData.local_id)?.nome || "Selecione o local"}
-                        {showLocalDropdown ? <FaChevronUp className="ml-2 text-gray-500" /> : <FaChevronDown className="ml-2 text-gray-500" />}
-                    </button>
-                    {/* Botão "Cadastrar novo local" */}
-                    <button
-                        type="button"
-                        onClick={() => router.push("/createLocation")}
-                        className="bg-black text-white font-semibold py-2 px-4 rounded-3xl hover:bg-gray-800 transition-colors shadow-md text-sm whitespace-nowrap"
-                    >
-                        Cadastrar
-                    </button>
+                <div className=" flex items-center gap-2"> {/* Flex container para o select e o botão */}
+                  <button
+                    type="button"
+                    onClick={() => setShowLocalDropdown(!showLocalDropdown)}
+                    className={`${selectButtonClasses} flex-grow`}
+                  >
+                    {locais.find(l => l.idLocal === formData.local_id)?.nome || "Selecione o local"}
+                    {showLocalDropdown ? <FaChevronUp className="ml-2 text-gray-500 " /> : <FaChevronDown className="ml-2 text-gray-500" />}
+                  </button>
+                  {/* Botão "Cadastrar novo local" */}
+                  <button
+                    type="button"
+                    onClick={() => router.push("/createLocation")}
+                    className="bg-black text-white font-semibold py-2 px-4 rounded-3xl hover:bg-gray-800 transition-colors shadow-md text-sm whitespace-nowrap"
+                  >
+                    Cadastrar
+                  </button>
                 </div>
                 {showLocalDropdown && (
                   <div className="relative w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
@@ -304,9 +323,8 @@ export default function CreateEvent() {
               </div>
 
               {/* Drilldown de Categoria Estilizado (sem botão ao lado) */}
-              <div 
-                className="relative z-10" // AUMENTADO O Z-INDEX PARA 10 AQUI TAMBÉM
-                // onMouseLeave removido
+              <div
+                className="relative z-10"
               >
                 <label htmlFor="categoria_id" className={labelClasses}>Categoria</label>
                 <button
@@ -350,6 +368,7 @@ export default function CreateEvent() {
         </div>
       </div>
       <Footer />
+      <ToastContainer />
     </>
   );
 }

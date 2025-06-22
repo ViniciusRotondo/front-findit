@@ -3,15 +3,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { FaSearch, FaEdit, FaTrash, FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Importa FaEdit e FaTrash, FaChevronDown/Up
+import { FaSearch, FaEdit, FaTrash, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import Header from '@/components/Header/page';
 import Footer from '@/components/Footer/page';
-import Image from 'next/image'; // Para usar o componente Image do Next.js
-import axios from 'axios'; // Para as chamadas de DELETE
+import Image from 'next/image';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-/**
- * Busca todos os eventos na API
- */
 const fetchEventos = async () => {
   try {
     const res = await fetch('http://localhost:8080/event');
@@ -27,6 +26,18 @@ export default function MeusEventos() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchInputRef = useRef(null);
+
+  const alertaBonitao = (mensagem, tipo) => {
+    toast[mensagem.includes('sucesso') ? 'success' : 'error'](mensagem, {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+  };
 
   // ───────────────────────── Estado / UI ─────────────────────────
   const [eventos, setEventos] = useState([]); // Todos os eventos do organizador
@@ -60,7 +71,7 @@ export default function MeusEventos() {
     if (status === 'unauthenticated') {
       router.replace('/login');
       return;
-    } 
+    }
     // Redireciona se autenticado mas não for organizador
     if (status === 'authenticated' && (session?.user?.tipo !== 'ORGANIZADOR' || !session.user.id)) {
       router.replace('/acesso-negado'); // Você pode criar esta página ou redirecionar para '/'
@@ -98,11 +109,11 @@ export default function MeusEventos() {
       const nomeMatch = evento.nome_do_evento.toLowerCase().includes(buscaNomeAplicada.toLowerCase());
       const localMatch = filtroLocalAplicado ? evento.local?.nome === filtroLocalAplicado : true;
       const categoriaMatch = filtroCategoriaAplicada ? evento.categoria === filtroCategoriaAplicada : true;
-      
+
       const dataEvento = new Date(evento.data_hora);
       const dataFiltro = filtroDataAplicada ? new Date(filtroDataAplicada) : null;
       // Compara apenas a data (ignora a hora)
-      const dataMatch = dataFiltro ? 
+      const dataMatch = dataFiltro ?
         dataEvento.getFullYear() === dataFiltro.getFullYear() &&
         dataEvento.getMonth() === dataFiltro.getMonth() &&
         dataEvento.getDate() === dataFiltro.getDate()
@@ -150,18 +161,18 @@ export default function MeusEventos() {
       try {
         const res = await axios.delete(`http://localhost:8080/event/${eventToDelete.idEvento}`);
         if (res.status === 204) { // 204 No Content para DELETE bem-sucedido
-          alert('Evento excluído com sucesso!');
+          alertaBonitao('Evento excluído com sucesso!');
           // Recarregar os eventos após a exclusão
           const todosAtualizados = await fetchEventos();
           const meusAtualizados = todosAtualizados.filter((e) => e.organizador?.idOrganizador === session.user.id);
           setEventos(meusAtualizados);
           setEventosFiltrados(meusAtualizados);
         } else {
-          alert('Erro ao excluir evento.');
+          alertaBonitao('Erro ao excluir evento.');
         }
       } catch (err) {
         console.error('Erro ao excluir evento:', err);
-        alert('Erro ao excluir evento.');
+        alertaBonitao('Erro ao excluir evento.');
       } finally {
         setShowDeletePopup(false);
         setEventToDelete(null);
@@ -182,7 +193,7 @@ export default function MeusEventos() {
   if (status === 'authenticated' && (session?.user?.tipo !== 'ORGANIZADOR' || !session.user.id)) {
     return <div className="min-h-screen flex items-center justify-center text-xl font-medium text-red-600">Acesso Negado: Você não é um organizador.</div>;
   }
-  
+
   // Se chegou aqui, é porque está autenticado e é organizador
   return (
     <div className="min-h-screen bg-cover bg-center font-lato" style={{ backgroundImage: "url('/page1.png')" }}>
@@ -220,7 +231,7 @@ export default function MeusEventos() {
       {/* Dropdown de Filtros (Local, Categoria, Data) */}
       {showFiltersDropdown && (
         <div className="w-full bg-white/90 backdrop-blur-sm shadow-lg py-4 flex flex-wrap justify-center gap-6 z-10 border-b border-gray-200">
-          
+
           {/* Filtro de Locais Estilizado */}
           <div className="relative">
             <button
@@ -324,15 +335,15 @@ export default function MeusEventos() {
             eventosFiltrados.map((ev) => (
               <div key={ev.idEvento} className="w-64 bg-white shadow-md rounded-b-md mb-4 text-left relative overflow-hidden group">
                 {/* Imagem do Evento */}
-                <div 
-                  className="w-full h-48 cursor-pointer relative" 
+                <div
+                  className="w-full h-48 cursor-pointer relative"
                   onClick={() => handleView(ev.idEvento)}
                 >
-                  <Image 
-                    src={`/${ev.url_imagem}.jpg`} 
-                    alt={ev.nome_do_evento} 
-                    layout="fill" 
-                    objectFit="cover" 
+                  <Image
+                    src={`/${ev.url_imagem}.jpg`}
+                    alt={ev.nome_do_evento}
+                    layout="fill"
+                    objectFit="cover"
                     className="rounded-t-md"
                     priority // Para carregar mais rápido
                   />
@@ -353,7 +364,7 @@ export default function MeusEventos() {
 
                 {/* Botões de Ação (Editar/Deletar) - Centralizados no rodapé do card */}
                 <div className="absolute bottom-0 left-0 right-0 h-10 flex items-center justify-center bg-gray-100 rounded-b-md border-t border-gray-200">
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(ev.idEvento); }}
                     className="flex-1 text-blue-600 hover:text-blue-800 p-2 flex justify-center items-center group-hover:scale-110 transition-transform"
                     title="Editar Evento"
@@ -361,7 +372,7 @@ export default function MeusEventos() {
                     <FaEdit className="text-lg" />
                   </button>
                   <div className="w-px h-full bg-gray-300"></div> {/* Divisor */}
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteClick(ev); }}
                     className="flex-1 text-red-600 hover:text-red-800 p-2 flex justify-center items-center group-hover:scale-110 transition-transform"
                     title="Excluir Evento"
@@ -376,6 +387,7 @@ export default function MeusEventos() {
       </main>
 
       <Footer />
+      <ToastContainer />
 
       {/* Popup de confirmação de exclusão */}
       {showDeletePopup && (
